@@ -1,0 +1,27 @@
+from airflow.models import DAG
+
+from aqueduct_executor.operators.function_executor import main
+from aqueduct_executor.operators.param_executor import main
+from aqueduct_executor.operators.connectors.tabular import main
+
+def invoke_task(spec):
+    '''
+    Check the spec type and invoke the correct operator.
+    First, append the dag_run_id to all of the storage paths in the spec.
+    '''
+    return
+
+with DAG(
+    dag_id = '{{ dag_id }}'
+) as dag:
+    {% for task in tasks %}
+    {{ task.alias }} = PythonOperator(
+        task_id='{{ task.id }}',
+        python_callable=invoke_task,
+        op_args=[{{ task.spec.dict() }}, {{ task.python_dependencies }}],
+    )
+    {% endfor %}
+
+{% for edge in edges %}
+    {{ edge[0] }}.set_downstream({{ edge[1] }})
+    
