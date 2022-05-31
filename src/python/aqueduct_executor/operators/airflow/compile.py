@@ -23,13 +23,18 @@ def run(spec: spec.CompileAirflowSpec):
 
 def compile(spec: spec.CompileAirflowSpec):
     '''
-    - Collect list of operators and the input artifact ids and output artifacts. Using this list
-    create a set of tasks that can be passed into the templating script.
-    - Collect general DAG information from the workflow, such as Dag id and dag name?
-    - Determine the python executable for each of the tasks. For each of these tasks we also need to
-    know any special python virtual env libraries that need to be installed. This can be hardcoded for the
-    extract and load operators (and params). For function this needs to be read from storage, as there is a
-    requirements.txt file.
+    1. Using the workflow_name, we generate a dag_id. This is just going to be
+    workflow_name.
+    2. For each operator found in `specs`, we iterate over the operator and generate a Task
+    instance for it. This will be used to generate the task_id, which is simply the operator
+    name, an alias (we do this once the edges have been created).
+    3. Determine the python requirements for each of the tasks. For function operators, this
+    is going to require reading the function file and taking a look at the requirements.txt
+    file. For extract and load operators, we simply lookup the hardcoded mapping for the
+    system requirements. For example, Postgres operations would need to install psycopg2, 
+    while Snowflake operations would need to install snowflakedb.
+    4. Generate the template and get the response as bytes.
+    5. Write the bytes to the storage location found at output_content_path.
     '''
     env = Environment(loader=FileSystemLoader("./"))
     template = env.get_template("dag.template")
