@@ -1,9 +1,7 @@
 from typing import Optional, Union
 
-
-from pydantic import Field
-
 from aqueduct_executor.operators.connectors.tabular import models
+from pydantic import Field
 
 
 class BigQueryConfig(models.BaseConfig):
