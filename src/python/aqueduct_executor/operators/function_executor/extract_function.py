@@ -8,8 +8,8 @@ import traceback
 import zipfile
 
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
-from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
+from aqueduct_executor.operators.utils.storage.storage import Storage
 
 from . import spec
 
