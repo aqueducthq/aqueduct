@@ -1,5 +1,4 @@
 import argparse
-import json
 import base64
 
 from aqueduct_executor.operators.airflow import spec, execute
