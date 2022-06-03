@@ -3,8 +3,8 @@ import base64
 import os
 
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
-from . import spec
 
+from . import spec
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
