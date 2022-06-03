@@ -1,4 +1,3 @@
-
 import sys
 import traceback
 
@@ -35,7 +34,7 @@ def run(spec: spec.Spec):
             run_discover(spec, op, storage)
         else:
             raise Exception("Unknown job: %s" % spec.type)
-        
+
         utils.write_operator_metadata(storage, spec.metadata_path, err="", logs={})
     except Exception as e:
         traceback.print_exc()

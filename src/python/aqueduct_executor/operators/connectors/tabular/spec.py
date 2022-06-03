@@ -1,17 +1,16 @@
 import json
 from typing import Union
 
+from aqueduct_executor.operators.connectors.tabular import common, config, extract, load, models
+from aqueduct_executor.operators.utils import enums
+from aqueduct_executor.operators.utils.storage import config as sconfig
+from pydantic import parse_obj_as, validator
+
 try:
     from typing import Literal
 except ImportError:
     # Python 3.7 does not support typing.Literal
     from typing_extensions import Literal
-
-from pydantic import validator, parse_obj_as
-
-from aqueduct_executor.operators.connectors.tabular import common, config, extract, load, models
-from aqueduct_executor.operators.utils import enums
-from aqueduct_executor.operators.utils.storage import config as sconfig
 
 
 def unwrap_connector_config(cls, connector_config, values):
@@ -133,6 +132,7 @@ class DiscoverSpec(models.BaseSpec):
 
 
 Spec = Union[AuthenticateSpec, ExtractSpec, LoadSpec, LoadTableSpec, DiscoverSpec]
+
 
 def parse_spec(spec_json: str) -> Spec:
     """

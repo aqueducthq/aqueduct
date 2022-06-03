@@ -1,8 +1,7 @@
 from typing import Optional, Union
 
-from pydantic import validator
-
 from aqueduct_executor.operators.connectors.tabular import common, models
+from pydantic import validator
 
 
 class RelationalParams(models.BaseParams):

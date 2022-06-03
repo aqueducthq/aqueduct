@@ -1,6 +1,5 @@
-from sqlalchemy import create_engine, engine
-
 from aqueduct_executor.operators.connectors.tabular import config, relational
+from sqlalchemy import create_engine, engine
 
 
 class SqliteConnector(relational.RelationalConnector):
