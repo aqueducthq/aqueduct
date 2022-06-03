@@ -5,7 +5,7 @@ python3 -m aqueduct_executor.operators.function_executor.extract_function --spec
 
 if test -f "$OP_PATH/requirements.txt"; then pip3 install -r "$OP_PATH/requirements.txt" --no-cache-dir; fi
 
-python3 -m aqueduct_executor.operators.function_executor.execute_function --spec "$JOB_SPEC"
+python3 -m aqueduct_executor.operators.function_executor.main --spec "$JOB_SPEC"
 
 # Remove the /op suffix.
 FUNCTION_EXTRACT_PATH=${OP_PATH::-3}

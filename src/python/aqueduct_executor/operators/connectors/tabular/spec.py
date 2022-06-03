@@ -1,3 +1,4 @@
+import json
 from typing import Union
 
 try:
@@ -6,7 +7,7 @@ except ImportError:
     # Python 3.7 does not support typing.Literal
     from typing_extensions import Literal
 
-from pydantic import validator
+from pydantic import validator, parse_obj_as
 
 from aqueduct_executor.operators.connectors.tabular import common, config, extract, load, models
 from aqueduct_executor.operators.utils import enums
@@ -132,3 +133,11 @@ class DiscoverSpec(models.BaseSpec):
 
 
 Spec = Union[AuthenticateSpec, ExtractSpec, LoadSpec, LoadTableSpec, DiscoverSpec]
+
+def parse_spec(spec_json: str) -> Spec:
+    """
+    Parses a JSON string into a connector Spec.
+    """
+    data = json.loads(spec_json)
+
+    return parse_obj_as(Spec, data)
