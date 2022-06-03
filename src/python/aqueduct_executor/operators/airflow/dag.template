@@ -3,13 +3,27 @@ from airflow.models import DAG
 from aqueduct_executor.operators.function_executor import main
 from aqueduct_executor.operators.param_executor import main
 from aqueduct_executor.operators.connectors.tabular import main
+from aqueduct_executor.operators.utils import enums
 
-def invoke_task(spec):
+def invoke_task(run_id, spec):
     '''
     Check the spec type and invoke the correct operator.
     First, append the dag_run_id to all of the storage paths in the spec.
     '''
-    return
+    if spec.type == enums.JobType.FUNCTION:
+        handle_function(run_id, spec)
+    elif spec.type == enums.JobType.EXTRACT or spec.type == enums.JobType.LOAD:
+        handle_connector(run_id, spec)
+    elif spec.type == enums.JobType.PARAM:
+        handle_param(run_id, spec)
+
+def handle_function(run_id, spec):
+    
+
+def handle_connector(run_id, spec):
+
+def handle_param(run_id, spec):
+
 
 with DAG(
     dag_id = '{{ dag_id }}'
@@ -18,10 +32,10 @@ with DAG(
     {{ task.alias }} = PythonOperator(
         task_id='{{ task.id }}',
         python_callable=invoke_task,
-        op_args=[{{ task.spec.dict() }}, {{ task.python_dependencies }}],
+        op_args=[{{ task.spec.dict() }}],
     )
     {% endfor %}
 
 {% for edge in edges %}
     {{ edge[0] }}.set_downstream({{ edge[1] }})
-    
+{% endfor %}    
