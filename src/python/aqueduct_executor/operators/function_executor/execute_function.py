@@ -10,6 +10,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from typing import Any, Callable, List, Tuple, Dict
 
 from aqueduct_executor.operators.function_executor import spec
+from aqueduct_executor.operators.function_executor.timer import Timer
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.storage.storage import Storage
@@ -113,7 +114,6 @@ def _execute_function(
     """
     stdout_log = io.StringIO()
     stderr_log = io.StringIO()
-
     try:
         invoke = _import_invoke_method(spec)
         print("Invoking the function...")
@@ -138,29 +138,8 @@ def _execute_function(
     finally:
         sys.path.pop(0)
 
+    storage = parse_storage(spec.storage_config)
     return result, _fetch_logs(stdout_log, stderr_log), ""
-
-
-def _write_outputs(
-    spec: spec.FunctionSpec,
-    storage: Storage,
-    res: Any,
-    logs: Dict[str, str],
-):
-    # Force all results to be of type `list`, so we can always loop over them.
-    results = res
-    if not isinstance(res, list):
-        results = [res]
-
-    utils.write_artifacts(
-        storage,
-        spec.output_content_paths,
-        spec.output_metadata_paths,
-        results,
-        spec.output_artifact_types,
-    )
-    utils.write_operator_metadata(storage, spec.metadata_path, "", logs)
-
 
 def run(spec: spec.FunctionSpec) -> None:
     """
@@ -169,31 +148,41 @@ def run(spec: spec.FunctionSpec) -> None:
     storage = parse_storage(spec.storage_config)
     logs = {}
     try:
+        print("INPUT METADATA PATHS %s" % spec.input_metadata_paths[0])
+        print("OUTPUT METADAT PATHS %s" % spec.output_metadata_paths[0])
+        print("METADATA PATH %s" % spec.metadata_path)
         # Read the input data from intermediate storage.
         inputs = utils.read_artifacts(
             storage, spec.input_content_paths, spec.input_metadata_paths, spec.input_artifact_types
         )
 
+        system_metadata = utils.read_system_metadata(storage, spec.input_metadata_paths)
+        print(system_metadata)
+
+        timer = Timer()
+        timer.start()
         print("Invoking the function...")
         results, logs, err_msg = _execute_function(spec, inputs)
         if len(err_msg) > 0:
             raise Exception(err_msg)
 
         print("Function invoked successfully!")
-
+        elapsedTime = timer.stop()
         # Force all results to be of type `list`, so we can always loop over them.
         if not isinstance(results, list):
             results = [results]
 
+        system_metadata = {"time" : str(elapsedTime)}
         utils.write_artifacts(
             storage,
             spec.output_content_paths,
             spec.output_metadata_paths,
             results,
+            system_metadata,
             spec.output_artifact_types,
         )
-        utils.write_operator_metadata(storage, spec.metadata_path, "", logs)
 
+        utils.write_operator_metadata(storage, spec.metadata_path, "", logs)
     except Exception as e:
         utils.write_operator_metadata(storage, spec.metadata_path, str(e), logs)
         print("Exception Raised: ", e)

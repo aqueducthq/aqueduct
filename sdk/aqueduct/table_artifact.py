@@ -28,6 +28,7 @@ from aqueduct.operators import (
     LoadSpec,
     FunctionSpec,
     MetricSpec,
+    SystemMetricSpec,
 )
 from aqueduct.utils import (
     serialize_function,
@@ -72,6 +73,7 @@ class TableArtifact(Artifact):
         self._api_client = api_client
         self._dag = dag
         self._artifact_id = artifact_id
+        self._create_internal_metrics()
 
     def get(self) -> pd.DataFrame:
         """Materializes TableArtifact into an actual dataframe.
@@ -317,20 +319,40 @@ class TableArtifact(Artifact):
         )
         return self._apply_metric_to_table(internal_std_metric, metric_name, metric_description)
 
-    def _apply_metric_to_table(
+    def get_time_metric(self):
+        return self._time_metric
+
+    def _create_internal_metrics(
         self,
-        metric_function: Callable[..., float],
+    ):
+        print("we are being called bro")
+        def internal_time_metric(table: pd.DataFrame) -> float:
+            print(table)
+            return 0
+        
+        def internal_mem_metric(table: pd.DataFrame) -> float:
+            return 0
+        
+        self._time_metric = self._apply_system_metric_to_table(
+            "internal_time_metric",
+            "op runtime time"
+        )
+
+        # self._apply_metric_to_table(
+        #     internal_mem_metric,
+        #     "internal_mem_metric",
+        #     "op mem"
+        # )
+
+    def _apply_system_metric_to_table(
+        self,
         metric_name: str,
         metric_description: str,
     ) -> MetricArtifact:
-        zip_file = serialize_function(metric_function)
 
-        function_spec = FunctionSpec(
-            type=FunctionType.FILE,
-            granularity=FunctionGranularity.TABLE,
-            file=zip_file,
+        metric_spec = SystemMetricSpec(
+            metricname = metric_name
         )
-        metric_spec = MetricSpec(function=function_spec)
 
         dag = self._dag
         api_client = self._api_client
@@ -348,7 +370,7 @@ class TableArtifact(Artifact):
                         id=operator_id,
                         name=metric_name,
                         description=metric_description,
-                        spec=OperatorSpec(metric=metric_spec),
+                        spec=OperatorSpec(systemmetric=metric_spec),
                         inputs=[self._artifact_id],
                         outputs=[output_artifact_id],
                     ),

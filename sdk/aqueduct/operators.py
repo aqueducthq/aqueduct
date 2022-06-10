@@ -133,6 +133,9 @@ class FunctionSpec(BaseModel):
 class MetricSpec(BaseModel):
     function: FunctionSpec
 
+class SystemMetricSpec(BaseModel):
+    metricname: str
+
 
 class CheckSpec(BaseModel):
     level: CheckSeverity
@@ -150,6 +153,7 @@ class OperatorSpec(BaseModel):
     metric: Optional[MetricSpec]
     check: Optional[CheckSpec]
     param: Optional[ParamSpec]
+    systemmetric: Optional[SystemMetricSpec]
 
 
 class Operator(BaseModel):
@@ -184,5 +188,7 @@ def get_operator_type(operator: Operator) -> OperatorType:
         return OperatorType.CHECK
     if operator.spec.param is not None:
         return OperatorType.PARAM
+    if operator.spec.systemmetric is not None:
+        return OperatorType.SYSTEMMETRIC
     else:
         raise AqueductError("Invalid operator type")

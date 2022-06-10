@@ -6,7 +6,10 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 )
 
-type Metadata []map[string]string // Table Schema from Pandas
+type Metadata struct {
+	Schema []map[string]string // Table Schema from Pandas
+	SystemMetadata map[string]string // Metadata from the system
+}
 
 type NullMetadata struct {
 	Metadata

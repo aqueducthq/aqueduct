@@ -23,6 +23,7 @@ const (
 	defaultPythonExecutorPackage = "aqueduct_executor"
 	connectorPythonPath          = "operators.connectors.tabular.main"
 	paramPythonPath              = "operators.param_executor.main"
+	systemMetricPythonPath       = "operators.systemmetric_executor.main"
 	workflowExecutorBinary       = "executor"
 	functionExecutorBashScript   = "start-function-executor.sh"
 
@@ -164,6 +165,8 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			return nil, err
 		}
 
+		fmt.Println(specStr)
+
 		return exec.Command(
 			"bash",
 			filepath.Join(j.conf.BinaryDir, functionExecutorBashScript),
@@ -179,6 +182,19 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"python3",
 			"-m",
 			fmt.Sprintf("%s.%s", j.conf.PythonExecutorPackage, paramPythonPath),
+			"--spec",
+			specStr,
+		), nil
+	} else if spec.Type() == SystemMetricJobType {
+		specStr, err := EncodeSpec(spec, JsonSerializationType)
+		if err != nil {
+			return nil, err
+		}
+
+		return exec.Command(
+			"python3",
+			"-m",
+			fmt.Sprintf("%s.%s", j.conf.PythonExecutorPackage, systemMetricPythonPath),
 			"--spec",
 			specStr,
 		), nil

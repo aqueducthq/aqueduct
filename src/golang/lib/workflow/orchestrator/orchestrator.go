@@ -3,6 +3,7 @@ package orchestrator
 import (
 	"context"
 	"time"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
@@ -133,11 +134,14 @@ func updateCompletedOp(
 			}
 
 			if operatorStatus == shared.FailedExecutionStatus && failureType == scheduler.SystemFailure {
+				fmt.Println("\n\n\n\n\n WE ARE SYSTEM FAILURE OP AS FAIL \n\n\n")
+				fmt.Println(id)
 				return false, operatorExecutionError(operators, id)
 			}
 
 			if operatorStatus == shared.FailedExecutionStatus && failureType == scheduler.UserFailure {
 				// There is an user error when executing the operator.
+				fmt.Println("\n\n\n\n\n WE ARE USER ERROR AS FAIL \n\n\n")
 				return true, nil
 			}
 
@@ -183,6 +187,7 @@ func scheduleOperators(
 ) error {
 	for id := range ready {
 		op, ok := operators[id]
+		fmt.Println(fmt.Sprintf("Scheduling %s", id))
 		if !ok {
 			return operatorExecutionError(operators, id)
 		}
@@ -359,6 +364,7 @@ func orchestrate(
 	isPreview bool,
 ) (shared.ExecutionStatus, error) {
 	numOperators := len(dag.Operators)
+	fmt.Println(fmt.Sprintf("We are about to execute %s many operators", len(dag.Operators)))
 	artifactToDownstreamOperatorIds := make(map[uuid.UUID][]uuid.UUID, len(dag.Artifacts))
 	operatorIdToJobId := make(map[uuid.UUID]string, numOperators)
 	// Maps from operator ID to its upstream artifact dependencies.

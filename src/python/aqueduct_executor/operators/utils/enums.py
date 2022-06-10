@@ -20,6 +20,7 @@ class JobType(str, Enum, metaclass=MetaEnum):
     LOAD = "load"
     DISCOVER = "discover"
     PARAM = "param"
+    SYSTEMMETRIC = "systemmetric"
 
 
 class InputArtifactType(str, Enum, metaclass=MetaEnum):

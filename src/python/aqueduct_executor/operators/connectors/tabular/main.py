@@ -50,6 +50,7 @@ def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage:
         [spec.output_content_path],
         [spec.output_metadata_path],
         [df],
+        {},
         [utils.OutputArtifactType.TABLE],
     )
 

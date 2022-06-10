@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
@@ -66,7 +67,7 @@ type previewParamArtifactResponse struct {
 }
 
 type previewTableArtifactResponse struct {
-	TableSchema artifact_result.Metadata `json:"table_schema"`
+	TableSchema []map[string]string `json:"table_schema"`
 	Data        string                   `json:"data"`
 }
 
@@ -280,10 +281,14 @@ func deserializeArtifactResponses(
 			if err != nil {
 				metadata = artifact_result.Metadata{}
 			}
+			fmt.Println("WE GOT THE METADATA AND IT IS THIS: ")
 
+			fmt.Println(metadata.Schema)
+			fmt.Println(metadata.SystemMetadata)
+			fmt.Println("===========")
 			responses[id] = previewArtifactResponse{
 				Table: &previewTableArtifactResponse{
-					TableSchema: metadata,
+					TableSchema: metadata.Schema,
 					Data:        string(content),
 				},
 			}

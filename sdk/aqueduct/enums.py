@@ -44,6 +44,7 @@ class OperatorType(Enum, metaclass=MetaEnum):
     METRIC = "metric"
     CHECK = "check"
     PARAM = "param"
+    SYSTEMMETRIC = "systemmetric"
 
 
 class TriggerType(Enum, metaclass=MetaEnum):

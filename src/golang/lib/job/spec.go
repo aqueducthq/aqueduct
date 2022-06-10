@@ -39,6 +39,7 @@ const (
 	WorkflowJobType       JobType = "workflow"
 	FunctionJobType       JobType = "function"
 	ParamJobType          JobType = "param"
+	SystemMetricJobType   JobType = "systemmetric"
 	AuthenticateJobType   JobType = "authenticate"
 	ExtractJobType        JobType = "extract"
 	LoadJobType           JobType = "load"
@@ -109,6 +110,16 @@ type ParamSpec struct {
 	OutputMetadataPath string `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
+type SystemMetricSpec struct {
+	basePythonSpec
+	MetricName                string `json:"metricname"  yaml:"metricname"`
+	InputContentPaths   []string        `json:"input_content_paths"  yaml:"input_content_paths"`
+	InputMetadataPaths  []string        `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
+	OutputContentPaths  []string        `json:"output_content_paths"  yaml:"output_content_paths"`
+	OutputMetadataPaths []string        `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
+	OutputArtifactTypes []artifact.Type `json:"output_artifact_types"  yaml:"output_artifact_types"`
+}
+
 type ExtractSpec struct {
 	basePythonSpec
 	ConnectorName      integration.Service     `json:"connector_name"  yaml:"connector_name"`
@@ -154,6 +165,10 @@ func (*FunctionSpec) Type() JobType {
 
 func (*ParamSpec) Type() JobType {
 	return ParamJobType
+}
+
+func (*SystemMetricSpec) Type() JobType {
+	return SystemMetricJobType
 }
 
 func (*AuthenticateSpec) Type() JobType {
@@ -276,6 +291,36 @@ func NewParamSpec(
 		Val:                val,
 		OutputMetadataPath: outputMetadataPath,
 		OutputContentPath:  outputContentPath,
+	}
+}
+
+func NewSystemMetricSpec(
+	name string,
+	storageConfig *shared.StorageConfig,
+	metadataPath string,
+	val string,
+	inputContentPaths []string,
+	inputMetadataPaths []string,
+	outputContentPaths []string,
+	outputMetadataPaths []string,
+	outputArtifactTypes []artifact.Type,
+) Spec {
+	return &SystemMetricSpec {
+		basePythonSpec: basePythonSpec{
+			baseSpec: baseSpec{
+				Type: SystemMetricJobType,
+				Name: name,
+			},
+			StorageConfig: *storageConfig,
+			MetadataPath:  metadataPath,
+		},
+		InputContentPaths:   inputContentPaths,
+		InputMetadataPaths:  inputMetadataPaths,
+		OutputContentPaths:  outputContentPaths,
+		OutputMetadataPaths: outputMetadataPaths,
+		OutputArtifactTypes: outputArtifactTypes,
+		MetricName:                val,
+
 	}
 }
 

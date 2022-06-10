@@ -1,3 +1,4 @@
+from curses import meta
 import io
 import json
 from typing import Any, Dict, List, Union
@@ -43,6 +44,17 @@ def read_artifacts(
             raise Exception("Unexpected input artifact type %s", artifact_type)
     return inputs
 
+def read_system_metadata(
+    storage: Storage,
+    input_metadata_paths: List[str],
+):
+
+    inputs: List[InputArtifact] = []
+    for input_path in input_metadata_paths:
+        inputs.append(_read_json_input(storage, input_path))
+
+    return inputs
+
 
 # TODO: Can also the input metadata here if we wanted to use it.
 def _read_tabular_input(storage: Storage, path: str) -> pd.DataFrame:
@@ -72,6 +84,7 @@ def write_artifacts(
     output_paths: List[str],
     output_metadata_paths: List[str],
     contents: List[Any],
+    system_metadata: Dict[str, str],
     artifact_types: List[OutputArtifactType],
 ) -> None:
     if (
@@ -92,7 +105,7 @@ def write_artifacts(
     for (artifact_type, output_path, output_metadata_path, content) in zip(
         artifact_types, output_paths, output_metadata_paths, contents
     ):
-        write_artifact(storage, output_path, output_metadata_path, content, artifact_type)
+        write_artifact(storage, output_path, output_metadata_path, content, system_metadata, artifact_type)
 
 
 def write_artifact(
@@ -100,6 +113,7 @@ def write_artifact(
     output_path: str,
     output_metadata_path: str,
     content: Any,
+    system_metadata: Dict[str, str],
     artifact_type: OutputArtifactType,
 ) -> None:
     if artifact_type == OutputArtifactType.TABLE:
@@ -108,13 +122,13 @@ def write_artifact(
                 "Expected output type to be Pandas Dataframe, but instead got %s"
                 % type(content).__name__
             )
-        _write_tabular_output(storage, output_path, output_metadata_path, content)
+        _write_tabular_output(storage, output_path, output_metadata_path, content, system_metadata)
     elif artifact_type == OutputArtifactType.FLOAT:
         if not isinstance(content, float) and not isinstance(content, int):
             raise Exception(
                 "Expected output type to be float or int, instead got %s" % type(content).__name__
             )
-        _write_numeric_output(storage, output_path, output_metadata_path, content)
+        _write_numeric_output(storage, output_path, output_metadata_path, content, system_metadata)
     elif artifact_type == OutputArtifactType.BOOL:
         if isinstance(content, bool) or isinstance(content, np.bool_):
             _write_bool_output(storage, output_path, output_metadata_path, bool(content))
@@ -143,12 +157,19 @@ def _write_tabular_output(
     output_path: str,
     output_metadata_path: str,
     df: pd.DataFrame,
+    system_metadata: Dict[str, str],
 ) -> None:
     output_str = df.to_json(orient="table", date_format="iso", index=False)
 
     # Create tabular output metadata
     schema = [{col: str(df[col].dtype)} for col in df]
-    output_metadata_str = json.dumps(schema)
+    print("HERE WE ARE PRINTING SHIT")
+    metadata = {"schema" : schema, "SystemMetadata" : system_metadata}
+    print(metadata)
+    output_metadata_str = json.dumps(metadata)
+    print("This is what we are dumping btw")
+    print(output_metadata_str)
+    print("========")
 
     storage.put(output_path, bytes(output_str, encoding=_DEFAULT_ENCODING))
     storage.put(output_metadata_path, bytes(output_metadata_str, encoding=_DEFAULT_ENCODING))
@@ -159,10 +180,11 @@ def _write_numeric_output(
     output_path: str,
     output_metadata_path: str,
     val: Union[float, int],
+    system_metadata: Dict[str, Any],
 ) -> None:
     """Used for metrics."""
     storage.put(output_path, bytes(str(val), encoding=_DEFAULT_ENCODING))
-    storage.put(output_metadata_path, bytes(json.dumps([]), encoding=_DEFAULT_ENCODING))
+    storage.put(output_metadata_path, bytes(json.dumps({"schema":[], "SystemMetadata" : system_metadata}), encoding=_DEFAULT_ENCODING))
 
 
 def _write_bool_output(
@@ -173,7 +195,7 @@ def _write_bool_output(
 ) -> None:
     """Used for checks."""
     storage.put(output_path, bytes(str(val), encoding=_DEFAULT_ENCODING))
-    storage.put(output_metadata_path, bytes(json.dumps([]), encoding=_DEFAULT_ENCODING))
+    storage.put(output_metadata_path, bytes(json.dumps({"schema":[], "SystemMetadata" : {}}), encoding=_DEFAULT_ENCODING))
 
 
 def _write_json_output(
@@ -184,8 +206,7 @@ def _write_json_output(
 ) -> None:
     """Used for parameters."""
     storage.put(output_path, bytes(val, encoding=_DEFAULT_ENCODING))
-    storage.put(output_metadata_path, bytes(json.dumps([]), encoding=_DEFAULT_ENCODING))
-
+    storage.put(output_metadata_path, bytes(json.dumps({"schema":[], "SystemMetadata" : {}}), encoding=_DEFAULT_ENCODING))
 
 def write_operator_metadata(
     storage: Storage,
@@ -200,6 +221,8 @@ def write_operator_metadata(
     """
     metadata: Dict[str, Any] = {"error": err, "logs": logs}
     storage.put(metadata_path, bytes(json.dumps(metadata), encoding=_DEFAULT_ENCODING))
+
+
 
 
 def write_discover_results(storage: Storage, path: str, tables: List[str]):
