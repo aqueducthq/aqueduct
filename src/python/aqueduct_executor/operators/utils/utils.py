@@ -1,4 +1,3 @@
-from curses import meta
 import io
 import json
 from typing import Any, Dict, List, Union
@@ -163,13 +162,8 @@ def _write_tabular_output(
 
     # Create tabular output metadata
     schema = [{col: str(df[col].dtype)} for col in df]
-    print("HERE WE ARE PRINTING SHIT")
     metadata = {"schema" : schema, "SystemMetadata" : system_metadata}
-    print(metadata)
     output_metadata_str = json.dumps(metadata)
-    print("This is what we are dumping btw")
-    print(output_metadata_str)
-    print("========")
 
     storage.put(output_path, bytes(output_str, encoding=_DEFAULT_ENCODING))
     storage.put(output_metadata_path, bytes(output_metadata_str, encoding=_DEFAULT_ENCODING))
@@ -221,8 +215,6 @@ def write_operator_metadata(
     """
     metadata: Dict[str, Any] = {"error": err, "logs": logs}
     storage.put(metadata_path, bytes(json.dumps(metadata), encoding=_DEFAULT_ENCODING))
-
-
 
 
 def write_discover_results(storage: Storage, path: str, tables: List[str]):

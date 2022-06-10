@@ -10,14 +10,12 @@ from aqueduct_executor.operators.utils.storage.parse import parse_storage
 
 def run(spec: spec.SystemMetricSpec) -> None:
     """
-    Executes a parameter operator by storing the parameter value in the output content path.
+    Executes a system metric operator by storing the requested system metrics value in the output content path.
     """
     storage = parse_storage(spec.storage_config)
     system_metadata = utils.read_system_metadata(storage, spec.input_metadata_paths)
     print("=====")
-    print(system_metadata)
     print(spec.metricname)
-    print(type(system_metadata))
     print("=====")
     #runtime = system_metadata[0]["logs"]["runtime"]
     utils.write_artifact(

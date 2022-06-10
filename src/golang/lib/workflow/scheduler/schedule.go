@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -61,8 +60,6 @@ func ScheduleOperator(
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 ) (string, error) {
-	fmt.Println("THERE ARE THE PATHS WE LEAD")
-	fmt.Println(outputMetadataPaths)
 	// Append to this switch for newly supported operator types
 	if opSpec.IsFunction() {
 		// A function operator takes any number of dataframes as input and outputs
@@ -240,7 +237,6 @@ func ScheduleOperator(
 	}
 
 	if opSpec.IsSystemMetric() {
-		fmt.Println("WEEEE WE ARE SYSTEM THE METRICING")
 		outputArtifactTypes := []artifact.Type{artifact.FloatType}
 		return ScheduleSystemMetric(
 			ctx,
@@ -293,15 +289,12 @@ func CheckOperatorExecutionStatus(
 	}
 
 	if len(operatorResultMetadata.Error) != 0 {
-		fmt.Println("we are the 1 \n\n\n")
 		// Operator wrote metadata (including an error) to storage
-		fmt.Println("Operator wrote metadata (including an error) to storage \n\n\n")
 		return &operatorResultMetadata, shared.FailedExecutionStatus, UserFailure
 	}
 
 	if jobStatus == shared.FailedExecutionStatus {
 		// Operator wrote metadata (without an error) to storage, but k8s marked the job as failed
-		fmt.Println("Operator wrote metadata (without an error) to storage, but k8s marked the job as failed  \n\n\n")
 		return &operatorResultMetadata, shared.FailedExecutionStatus, UserFailure
 	}
 

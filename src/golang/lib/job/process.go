@@ -165,8 +165,6 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			return nil, err
 		}
 
-		fmt.Println(specStr)
-
 		return exec.Command(
 			"bash",
 			filepath.Join(j.conf.BinaryDir, functionExecutorBashScript),

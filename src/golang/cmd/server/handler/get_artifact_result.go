@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"net/http"
-	"fmt"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
@@ -94,7 +93,6 @@ func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, e
 }
 
 func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	fmt.Println("Performant in the way of getting artifact results \n\n\n\n\n")
 	args := interfaceArgs.(*getArtifactResultArgs)
 
 	emptyResp := getArtifactResultResponse{}
@@ -105,7 +103,6 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		h.Database,
 	)
 	if err != nil {
-		fmt.Println(err)
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow dag.")
 	}
 
@@ -116,15 +113,12 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		h.Database,
 	)
 	if err != nil {
-		fmt.Println("BRO WE ERRORING")
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 	}
 
 	response := getArtifactResultResponse{
 		Status: dbArtifactResult.Status,
 	}
-
-	fmt.Println(response)
 
 	if !dbArtifactResult.Metadata.IsNull {
 		response.Schema = dbArtifactResult.Metadata.Schema

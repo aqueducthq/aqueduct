@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"strconv"
-	"fmt"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
@@ -281,11 +280,6 @@ func deserializeArtifactResponses(
 			if err != nil {
 				metadata = artifact_result.Metadata{}
 			}
-			fmt.Println("WE GOT THE METADATA AND IT IS THIS: ")
-
-			fmt.Println(metadata.Schema)
-			fmt.Println(metadata.SystemMetadata)
-			fmt.Println("===========")
 			responses[id] = previewArtifactResponse{
 				Table: &previewTableArtifactResponse{
 					TableSchema: metadata.Schema,

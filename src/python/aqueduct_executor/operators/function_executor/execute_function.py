@@ -148,16 +148,10 @@ def run(spec: spec.FunctionSpec) -> None:
     storage = parse_storage(spec.storage_config)
     logs = {}
     try:
-        print("INPUT METADATA PATHS %s" % spec.input_metadata_paths[0])
-        print("OUTPUT METADAT PATHS %s" % spec.output_metadata_paths[0])
-        print("METADATA PATH %s" % spec.metadata_path)
         # Read the input data from intermediate storage.
         inputs = utils.read_artifacts(
             storage, spec.input_content_paths, spec.input_metadata_paths, spec.input_artifact_types
         )
-
-        system_metadata = utils.read_system_metadata(storage, spec.input_metadata_paths)
-        print(system_metadata)
 
         timer = Timer()
         timer.start()
