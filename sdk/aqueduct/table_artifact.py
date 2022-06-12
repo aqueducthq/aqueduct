@@ -64,12 +64,11 @@ class TableArtifact(Artifact):
         api_client: APIClient,
         dag: DAG,
         artifact_id: uuid.UUID,
-        system_metric_map={},
     ):
         self._api_client = api_client
         self._dag = dag
         self._artifact_id = artifact_id
-        self._system_metric_map = system_metric_map
+        self._system_metric_map = {}
 
     def get(self) -> pd.DataFrame:
         """Materializes TableArtifact into an actual dataframe.
@@ -326,6 +325,9 @@ class TableArtifact(Artifact):
         return MetricArtifact(
             api_client=self._api_client, dag=self._dag, artifact_id=self._system_metric_map[metric_name]
         )
+
+    def _associate_system_metric(self, metric_name:str, id:str):
+        self._system_metric_map[metric_name] = id
 
     def _get_table_operator(self) -> Operator:
         table_artifact = self._dag.get_operator(with_output_artifact_id=self._artifact_id)

@@ -1,6 +1,6 @@
 from typing import Callable, List, Optional, Union, Any
 from functools import wraps
-import json
+from xmlrpc.client import Boolean
 
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
@@ -14,6 +14,7 @@ from aqueduct.utils import (
     UserFunction,
     MetricFunction,
     CheckFunction,
+    SYSTEM_METRICS_INFO,
     serialize_function,
     generate_uuid,
     artifact_name_from_op_name,
@@ -36,7 +37,6 @@ DecoratedMetricFunction = Callable[[MetricFunction], OutputArtifactFunction]
 
 # Type declarations for checks
 DecoratedCheckFunction = Callable[[CheckFunction], OutputArtifactFunction]
-
 
 def _is_input_artifact(elem: Any) -> bool:
     return isinstance(elem, TableArtifact) or isinstance(elem, MetricArtifact) or isinstance(elem, ParamArtifact)
@@ -82,14 +82,7 @@ def wrap_spec(
     output_artifact_id = generate_uuid()
 
     output_artifact: OutputArtifact
-
-
-    system_operator_id = generate_uuid()
-    system_output_artifact_id = generate_uuid()
-    metric_name = "time_metric_in_decorator"
-    metric_spec = SystemMetricSpec(
-            metricname = metric_name
-        )
+    associate_system_metrics = False
     
     metric_artifact_spec = ArtifactSpec(float={})
 
@@ -99,9 +92,10 @@ def wrap_spec(
             api_client=api_client, dag=dag, artifact_id=output_artifact_id
         )
     elif spec.function:
+        associate_system_metrics = True
         artifact_spec = ArtifactSpec(table={})
         output_artifact = TableArtifact(
-            api_client=api_client, dag=dag, artifact_id=output_artifact_id, system_metric_map={"time" : system_output_artifact_id}
+            api_client=api_client, dag=dag, artifact_id=output_artifact_id
         )
     elif spec.check:
         artifact_spec = ArtifactSpec(bool={})
@@ -134,28 +128,39 @@ def wrap_spec(
         ],
     )
 
-    apply_deltas_to_dag(
-            dag,
-            deltas=[
-                AddOrReplaceOperatorDelta(
-                    op=Operator(
-                        id=system_operator_id,
-                        name=metric_name,
-                        description="describe the system metric",
-                        spec=OperatorSpec(systemmetric=metric_spec),
-                        inputs=[output_artifact_id],
-                        outputs=[system_output_artifact_id],
-                    ),
-                    output_artifacts=[
-                        Artifact(
-                            id=system_output_artifact_id,
-                            name=artifact_name_from_op_name(metric_name),
-                            spec=metric_artifact_spec,
-                        )
+    if associate_system_metrics:
+        for system_metric_name, description in SYSTEM_METRICS_INFO:
+            system_operator_id = generate_uuid()
+            system_output_artifact_id = generate_uuid()
+            metric_name = "%s %s metric" % (op_name, system_metric_name)
+            metric_spec = SystemMetricSpec(
+                metricname = metric_name
+            )
+
+            apply_deltas_to_dag(
+                    dag,
+                    deltas=[
+                        AddOrReplaceOperatorDelta(
+                            op=Operator(
+                                id=system_operator_id,
+                                name=metric_name,
+                                description=description,
+                                spec=OperatorSpec(systemmetric=metric_spec),
+                                inputs=[output_artifact_id],
+                                outputs=[system_output_artifact_id],
+                            ),
+                            output_artifacts=[
+                                Artifact(
+                                    id=system_output_artifact_id,
+                                    name=artifact_name_from_op_name(metric_name),
+                                    spec=metric_artifact_spec,
+                                )
+                            ],
+                        ),
                     ],
-                ),
-            ],
-        )
+                )
+        
+        output_artifact._associate_system_metric(system_metric_name, system_output_artifact_id)
 
     return output_artifact
 

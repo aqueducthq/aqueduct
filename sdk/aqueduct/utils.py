@@ -31,6 +31,8 @@ API_KEY_HEADER = "api-key"
 # Client version header
 CLIENT_VERSION = "sdk-client-version"
 
+SYSTEM_METRICS_INFO = [("runtime", "Gets the runtime for the operator that ran on this table")]
+
 
 def generate_auth_headers(api_key: str) -> Dict[str, str]:
     return {API_KEY_HEADER: api_key, CLIENT_VERSION: str(__version__)}
@@ -268,7 +270,6 @@ def _make_archive(source: str, destination: str) -> None:
 
 def artifact_name_from_op_name(op_name: str) -> str:
     return op_name + " artifact"
-
 
 def generate_extract_op_name(
     dag: DAG,
