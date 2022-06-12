@@ -1,11 +1,12 @@
 from typing import Callable, List, Optional, Union, Any
 from functools import wraps
+import json
 
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import apply_deltas_to_dag, AddOrReplaceOperatorDelta
 from aqueduct.enums import FunctionType, FunctionGranularity, CheckSeverity
-from aqueduct.operators import Operator, OperatorSpec, FunctionSpec, MetricSpec, CheckSpec
+from aqueduct.operators import Operator, OperatorSpec, FunctionSpec, MetricSpec, CheckSpec, SystemMetricSpec
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
 from aqueduct.metric_artifact import MetricArtifact
@@ -82,6 +83,16 @@ def wrap_spec(
 
     output_artifact: OutputArtifact
 
+
+    system_operator_id = generate_uuid()
+    system_output_artifact_id = generate_uuid()
+    metric_name = "time_metric_in_decorator"
+    metric_spec = SystemMetricSpec(
+            metricname = metric_name
+        )
+    
+    metric_artifact_spec = ArtifactSpec(float={})
+
     if spec.metric:
         artifact_spec = ArtifactSpec(float={})
         output_artifact = MetricArtifact(
@@ -90,7 +101,7 @@ def wrap_spec(
     elif spec.function:
         artifact_spec = ArtifactSpec(table={})
         output_artifact = TableArtifact(
-            api_client=api_client, dag=dag, artifact_id=output_artifact_id
+            api_client=api_client, dag=dag, artifact_id=output_artifact_id, system_metric_map={"time" : system_output_artifact_id}
         )
     elif spec.check:
         artifact_spec = ArtifactSpec(bool={})
@@ -122,6 +133,29 @@ def wrap_spec(
             ),
         ],
     )
+
+    apply_deltas_to_dag(
+            dag,
+            deltas=[
+                AddOrReplaceOperatorDelta(
+                    op=Operator(
+                        id=system_operator_id,
+                        name=metric_name,
+                        description="describe the system metric",
+                        spec=OperatorSpec(systemmetric=metric_spec),
+                        inputs=[output_artifact_id],
+                        outputs=[system_output_artifact_id],
+                    ),
+                    output_artifacts=[
+                        Artifact(
+                            id=system_output_artifact_id,
+                            name=artifact_name_from_op_name(metric_name),
+                            spec=metric_artifact_spec,
+                        )
+                    ],
+                ),
+            ],
+        )
 
     return output_artifact
 

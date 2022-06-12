@@ -172,9 +172,6 @@ class APIClient:
             "dag": dag.json(exclude_none=True),
         }
 
-        print("===========================================================")
-        print(json.dumps(json.loads(dag.json(exclude_none=True)), indent=4))
-
         files: Dict[str, IO[Any]] = {}
         for op in dag.list_operators():
             file = op.file()

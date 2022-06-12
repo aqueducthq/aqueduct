@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Callable, Any
+from typing import Any
 import uuid
 
 import pandas as pd
@@ -26,17 +26,12 @@ from aqueduct.operators import (
     Operator,
     OperatorSpec,
     LoadSpec,
-    FunctionSpec,
-    MetricSpec,
-    SystemMetricSpec,
 )
 from aqueduct.utils import (
-    serialize_function,
     generate_uuid,
     get_checks_for_op,
     get_description_for_check,
     get_description_for_metric,
-    artifact_name_from_op_name,
 )
 
 from aqueduct.generic_artifact import Artifact
@@ -69,11 +64,12 @@ class TableArtifact(Artifact):
         api_client: APIClient,
         dag: DAG,
         artifact_id: uuid.UUID,
+        system_metric_map={},
     ):
         self._api_client = api_client
         self._dag = dag
         self._artifact_id = artifact_id
-        self._create_internal_metrics()
+        self._system_metric_map = system_metric_map
 
     def get(self) -> pd.DataFrame:
         """Materializes TableArtifact into an actual dataframe.
@@ -319,73 +315,17 @@ class TableArtifact(Artifact):
         )
         return self._apply_metric_to_table(internal_std_metric, metric_name, metric_description)
 
-    def get_time_metric(self):
-        return self._time_metric
-
-    def _create_internal_metrics(
-        self,
-    ):
-        print("we are being called bro")
-        def internal_time_metric(table: pd.DataFrame) -> float:
-            print(table)
-            return 0
+    def system_metric(self, metric_name: str) -> MetricArtifact:
+        if metric_name not in self._system_metric_map:
+            raise AqueductError("Invalid metric requested")
         
-        def internal_mem_metric(table: pd.DataFrame) -> float:
-            return 0
-        
-        self._time_metric = self._apply_system_metric_to_table(
-            "internal_time_metric",
-            "op runtime time"
+        metric_artifact = self._dag.must_get_artifact(artifact_id=self._system_metric_map[metric_name])
+        if metric_artifact is None:
+            raise AqueductError("system metric artifact not found")
+
+        return MetricArtifact(
+            api_client=self._api_client, dag=self._dag, artifact_id=self._system_metric_map[metric_name]
         )
-
-        # self._apply_metric_to_table(
-        #     internal_mem_metric,
-        #     "internal_mem_metric",
-        #     "op mem"
-        # )
-
-    def _apply_system_metric_to_table(
-        self,
-        metric_name: str,
-        metric_description: str,
-    ) -> MetricArtifact:
-
-        metric_spec = SystemMetricSpec(
-            metricname = metric_name
-        )
-
-        dag = self._dag
-        api_client = self._api_client
-
-        operator_id = generate_uuid()
-        output_artifact_id = generate_uuid()
-
-        artifact_spec = ArtifactSpec(float={})
-
-        apply_deltas_to_dag(
-            dag,
-            deltas=[
-                AddOrReplaceOperatorDelta(
-                    op=Operator(
-                        id=operator_id,
-                        name=metric_name,
-                        description=metric_description,
-                        spec=OperatorSpec(systemmetric=metric_spec),
-                        inputs=[self._artifact_id],
-                        outputs=[output_artifact_id],
-                    ),
-                    output_artifacts=[
-                        aqueduct.artifact.Artifact(
-                            id=output_artifact_id,
-                            name=artifact_name_from_op_name(metric_name),
-                            spec=artifact_spec,
-                        )
-                    ],
-                ),
-            ],
-        )
-
-        return MetricArtifact(api_client=api_client, dag=dag, artifact_id=output_artifact_id)
 
     def _get_table_operator(self) -> Operator:
         table_artifact = self._dag.get_operator(with_output_artifact_id=self._artifact_id)
