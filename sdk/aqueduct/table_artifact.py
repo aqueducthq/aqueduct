@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Callable, Any
 import uuid
 
 import pandas as pd
@@ -26,12 +26,16 @@ from aqueduct.operators import (
     Operator,
     OperatorSpec,
     LoadSpec,
+    FunctionSpec,
+    MetricSpec,
 )
 from aqueduct.utils import (
+    serialize_function,
     generate_uuid,
     get_checks_for_op,
     get_description_for_check,
     get_description_for_metric,
+    artifact_name_from_op_name,
 )
 
 from aqueduct.generic_artifact import Artifact
@@ -313,6 +317,54 @@ class TableArtifact(Artifact):
             table_artifact.name,
         )
         return self._apply_metric_to_table(internal_std_metric, metric_name, metric_description)
+
+    def _apply_metric_to_table(
+        self,
+        metric_function: Callable[..., float],
+        metric_name: str,
+        metric_description: str,
+    ) -> MetricArtifact:
+        zip_file = serialize_function(metric_function)
+
+        function_spec = FunctionSpec(
+            type=FunctionType.FILE,
+            granularity=FunctionGranularity.TABLE,
+            file=zip_file,
+        )
+        metric_spec = MetricSpec(function=function_spec)
+
+        dag = self._dag
+        api_client = self._api_client
+
+        operator_id = generate_uuid()
+        output_artifact_id = generate_uuid()
+
+        artifact_spec = ArtifactSpec(float={})
+
+        apply_deltas_to_dag(
+            dag,
+            deltas=[
+                AddOrReplaceOperatorDelta(
+                    op=Operator(
+                        id=operator_id,
+                        name=metric_name,
+                        description=metric_description,
+                        spec=OperatorSpec(metric=metric_spec),
+                        inputs=[self._artifact_id],
+                        outputs=[output_artifact_id],
+                    ),
+                    output_artifacts=[
+                        aqueduct.artifact.Artifact(
+                            id=output_artifact_id,
+                            name=artifact_name_from_op_name(metric_name),
+                            spec=artifact_spec,
+                        )
+                    ],
+                ),
+            ],
+        )
+
+        return MetricArtifact(api_client=api_client, dag=dag, artifact_id=output_artifact_id)
 
     def system_metric(self, metric_name: str) -> MetricArtifact:
         if metric_name not in self._system_metric_map:

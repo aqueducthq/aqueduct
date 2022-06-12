@@ -1,9 +1,9 @@
 from typing import Callable, List, Optional, Union, Any
 from functools import wraps
-from xmlrpc.client import Boolean
 
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
+from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
 from aqueduct.dag import apply_deltas_to_dag, AddOrReplaceOperatorDelta
 from aqueduct.enums import FunctionType, FunctionGranularity, CheckSeverity
 from aqueduct.operators import Operator, OperatorSpec, FunctionSpec, MetricSpec, CheckSpec, SystemMetricSpec
@@ -14,7 +14,6 @@ from aqueduct.utils import (
     UserFunction,
     MetricFunction,
     CheckFunction,
-    SYSTEM_METRICS_INFO,
     serialize_function,
     generate_uuid,
     artifact_name_from_op_name,
@@ -37,6 +36,7 @@ DecoratedMetricFunction = Callable[[MetricFunction], OutputArtifactFunction]
 
 # Type declarations for checks
 DecoratedCheckFunction = Callable[[CheckFunction], OutputArtifactFunction]
+
 
 def _is_input_artifact(elem: Any) -> bool:
     return isinstance(elem, TableArtifact) or isinstance(elem, MetricArtifact) or isinstance(elem, ParamArtifact)
@@ -84,7 +84,6 @@ def wrap_spec(
     output_artifact: OutputArtifact
     associate_system_metrics = False
     
-    metric_artifact_spec = ArtifactSpec(float={})
 
     if spec.metric:
         artifact_spec = ArtifactSpec(float={})
@@ -136,6 +135,7 @@ def wrap_spec(
             metric_spec = SystemMetricSpec(
                 metricname = metric_name
             )
+            metric_artifact_spec = ArtifactSpec(float={})
 
             apply_deltas_to_dag(
                     dag,
