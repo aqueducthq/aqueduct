@@ -1,8 +1,11 @@
 from airflow.models import DAG
 
-from aqueduct_executor.operators.function_executor import main
-from aqueduct_executor.operators.param_executor import main
-from aqueduct_executor.operators.connectors.tabular import main
+from aqueduct_executor.operators.function_executor import execute as func_execute
+from aqueduct_executor.operators.function_executor import spec as func_spec
+from aqueduct_executor.operators.param_executor import execute as param_execute
+from aqueduct_executor.operators.param_executor import spec as param_spec
+from aqueduct_executor.operators.connectors.tabular import execute as conn_execute
+from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
 from aqueduct_executor.operators.utils import enums
 
 def invoke_task(run_id, spec):
@@ -12,30 +15,75 @@ def invoke_task(run_id, spec):
     '''
     if spec.type == enums.JobType.FUNCTION:
         handle_function(run_id, spec)
-    elif spec.type == enums.JobType.EXTRACT or spec.type == enums.JobType.LOAD:
-        handle_connector(run_id, spec)
+    elif spec.type == enums.JobType.EXTRACT:
+        handle_extract(run_id, spec)
+    elif spec.type == enums.JobType.LOAD:
+        handle_load(run_id, spec)
     elif spec.type == enums.JobType.PARAM:
         handle_param(run_id, spec)
 
-def handle_function(run_id, spec):
-    
+def handle_function(run_id: str, spec: func_spec.FunctionSpec):
+    """
+    Invokes a Function operator as an Airflow task.
+    It first ensures that all storage paths are unique by appending the run_id. 
+    """
+    spec.metadata_path = "{}_{}".format(spec.metadata_path, run_id)
+    spec.input_content_paths = ["{}_{}".format(p, run_id) for p in spec.input_content_paths]
+    spec.input_metadata_paths = ["{}_{}".format(p, run_id) for p in spec.input_metadata_paths]
+    spec.output_content_paths = ["{}_{}".format(p, run_id) for p in spec.output_content_paths]
+    spec.output_metadata_paths = ["{}_{}".format(p, run_id) for p in spec.output_metadata_paths]
 
-def handle_connector(run_id, spec):
+    func_execute.execute(spec)
 
-def handle_param(run_id, spec):
+
+def handle_extract(run_id: str, spec: conn_spec.ExtractSpec):
+    """
+    Invokes an Extract operator as an Airflow task.
+    It first ensures that all storage paths are unique by appending the run_id. 
+    """
+    spec.metadata_path = "{}_{}".format(spec.metadata_path, run_id)
+    spec.output_content_path = "{}_{}".format(spec.output_content_path, run_id)
+    spec.output_metadata_path = "{}_{}".format(spec.output_metadata_path, run_id)
+
+    conn_execute.execute(spec)
+
+def handle_load(run_id: str, spec: conn_spec.LoadSpec):
+    """
+    Invokes a Load operator as an Airflow task.
+    It first ensures that all storage paths are unique by appending the run_id. 
+    """
+    spec.metadata_path = "{}_{}".format(spec.metadata_path, run_id)
+    spec.input_content_path = "{}_{}".format(spec.input_content_path, run_id)
+    spec.input_metadata_path = "{}_{}".format(spec.input_metadata_path, run_id)
+
+    conn_execute.execute(spec)
+
+def handle_param(run_id: str, spec: param_spec.ParamSpec):
+    """
+    Invokes a Parameter operator as an Airflow task.
+    It first ensures that all storage paths are unique by appending the run_id. 
+    """
+    spec.metadata_path = "{}_{}".format(spec.metadata_path, run_id)
+    spec.output_content_path = "{}_{}".format(spec.output_content_path, run_id)
+    spec.output_metadata_path = "{}_{}".format(spec.output_metadata_path, run_id)
+
+    param_execute.execute(spec)
 
 
 with DAG(
     dag_id = '{{ dag_id }}'
 ) as dag:
+    null = None
     {% for task in tasks %}
     {{ task.alias }} = PythonOperator(
         task_id='{{ task.id }}',
         python_callable=invoke_task,
-        op_args=[{{ task.spec.dict() }}],
+        op_args=[
+    {{ task.spec.json(indent=4, separators=(',', ': ')) }}
+        ],
     )
     {% endfor %}
 
-{% for edge in edges %}
-    {{ edge[0] }}.set_downstream({{ edge[1] }})
-{% endfor %}    
+{% for k, v in edges.items() %}
+    {{ k }}.set_downstream({{ v }})
+{% endfor %}
