@@ -46,6 +46,7 @@ const (
 	LoadTableJobType      JobType = "load-table"
 	DiscoverJobType       JobType = "discover"
 	WorkflowRetentionType JobType = "workflow_retention"
+	CompileAirflowJobType JobType = "compile_airflow"
 )
 
 // `ExecutorConfiguration` represents the configuration variables that are
@@ -159,6 +160,14 @@ type DiscoverSpec struct {
 	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
 }
 
+type CompileAirflowSpec struct {
+	basePythonSpec
+	OutputContentPath string
+	DagId             string
+	TaskSpecs         map[string]Spec
+	Edges             map[string]string
+}
+
 func (*WorkflowRetentionSpec) Type() JobType {
 	return WorkflowRetentionType
 }
@@ -197,6 +206,10 @@ func (*LoadTableSpec) Type() JobType {
 
 func (*DiscoverSpec) Type() JobType {
 	return DiscoverJobType
+}
+
+func (*CompileAirflowSpec) Type() JobType {
+	return CompileAirflowJobType
 }
 
 // NewWorkflowRetentionSpec constructs a Spec for a WorkflowRetentionJob.
