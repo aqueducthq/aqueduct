@@ -14,7 +14,7 @@ func generateSystemMetricJobName() string {
 	return fmt.Sprintf("system_metric-operator-%s", uuid.New().String())
 }
 
-func ScheduleSystemMetric(
+func GenerateSystemMetricJobSpec(
 	ctx context.Context,
 	spec system_metric.SystemMetric,
 	metadataPath string,
@@ -23,10 +23,10 @@ func ScheduleSystemMetric(
 	outputMetadataPath string,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
-) (job.Spec, error) {
+) job.Spec {
 	jobName := generateSystemMetricJobName()
 
-	jobSpec := job.NewSystemMetricSpec(
+	return job.NewSystemMetricSpec(
 		jobName,
 		storageConfig,
 		metadataPath,
@@ -35,6 +35,4 @@ func ScheduleSystemMetric(
 		outputContentPath,
 		outputMetadataPath,
 	)
-
-	return jobSpec, nil
 }

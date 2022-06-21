@@ -79,13 +79,11 @@ func ScheduleOperator(
 		return "", err
 	}
 
-	jobName := jobSpec.Name()
-
-	if err := jobManager.Launch(ctx, jobName, jobSpec); err != nil {
+	if err := jobManager.Launch(ctx, jobSpec.Name(), jobSpec); err != nil {
 		return "", errors.Wrapf(err, "unable to schedule %v", opSpec.Type())
 	}
 
-	return jobName, nil
+	return jobSpec.Name(), nil
 }
 
 // GenerateOperatorJobSpec generates a job spec to execute the operator based
@@ -124,7 +122,7 @@ func GenerateOperatorJobSpec(
 			outputArtifactTypes = append(outputArtifactTypes, outputArtifactSpec.Type())
 		}
 
-		return ScheduleFunction(
+		return GenerateFunctionJobSpec(
 			ctx,
 			*opSpec.Function(),
 			metadataPath,
@@ -136,7 +134,7 @@ func GenerateOperatorJobSpec(
 			outputArtifactTypes,
 			storageConfig,
 			jobManager,
-		)
+		), nil
 	}
 
 	if opSpec.IsMetric() {
@@ -155,7 +153,7 @@ func GenerateOperatorJobSpec(
 		}
 		outputArtifactTypes := []artifact.Type{artifact.FloatType}
 
-		return ScheduleFunction(
+		return GenerateFunctionJobSpec(
 			ctx,
 			opSpec.Metric().Function,
 			metadataPath,
@@ -167,7 +165,7 @@ func GenerateOperatorJobSpec(
 			outputArtifactTypes,
 			storageConfig,
 			jobManager,
-		)
+		), nil
 	}
 
 	if opSpec.IsCheck() {
@@ -187,7 +185,7 @@ func GenerateOperatorJobSpec(
 		}
 		outputArtifactTypes := []artifact.Type{artifact.BoolType}
 
-		return ScheduleFunction(
+		return GenerateFunctionJobSpec(
 			ctx,
 			opSpec.Check().Function,
 			metadataPath,
@@ -199,7 +197,7 @@ func GenerateOperatorJobSpec(
 			outputArtifactTypes,
 			storageConfig,
 			jobManager,
-		)
+		), nil
 	}
 
 	if opSpec.IsExtract() {
@@ -216,7 +214,7 @@ func GenerateOperatorJobSpec(
 			return nil, ErrWrongNumArtifactMetadataPaths
 		}
 
-		return ScheduleExtract(
+		return GenerateExtractJobSpec(
 			ctx,
 			*opSpec.Extract(),
 			metadataPath,
@@ -241,7 +239,7 @@ func GenerateOperatorJobSpec(
 		if len(inputMetadataPaths) != 1 {
 			return nil, ErrWrongNumArtifactMetadataPaths
 		}
-		return ScheduleLoad(
+		return GenerateLoadJobSpec(
 			ctx,
 			*opSpec.Load(),
 			metadataPath,
@@ -270,7 +268,7 @@ func GenerateOperatorJobSpec(
 			return nil, ErrWrongNumArtifactMetadataPaths
 		}
 
-		return ScheduleParam(
+		return GenerateParamJobSpec(
 			ctx,
 			*opSpec.Param(),
 			metadataPath,
@@ -278,7 +276,7 @@ func GenerateOperatorJobSpec(
 			outputMetadataPaths[0],
 			storageConfig,
 			jobManager,
-		)
+		), nil
 	}
 
 	if opSpec.IsSystemMetric() {
@@ -294,7 +292,7 @@ func GenerateOperatorJobSpec(
 			return nil, ErrWrongNumMetadataInputs
 		}
 
-		return ScheduleSystemMetric(
+		return GenerateSystemMetricJobSpec(
 			ctx,
 			*opSpec.SystemMetric(),
 			metadataPath,
@@ -303,7 +301,7 @@ func GenerateOperatorJobSpec(
 			outputMetadataPaths[0],
 			storageConfig,
 			jobManager,
-		)
+		), nil
 	}
 
 	// If we reach here, the operator opSpec type is not supported.
