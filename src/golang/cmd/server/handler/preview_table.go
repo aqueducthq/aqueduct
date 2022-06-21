@@ -132,7 +132,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 
 	query := fmt.Sprintf("SELECT * FROM %s;", args.tableName)
 
-	jobName, err := scheduler.ScheduleExtract(
+	jobSpec, err := scheduler.GenerateExtractJobSpec(
 		ctx,
 		connector.Extract{
 			Service:       integrationObject.Service,
@@ -152,10 +152,14 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		h.Vault,
 	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to schedule job to preview table.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while launching job to preview table.")
 	}
 
-	jobStatus, err := job.PollJob(ctx, jobName, h.JobManager, PollPreviewTableInterval, PollPreviewTableTimeout)
+	if err := h.JobManager.Launch(ctx, jobSpec.Name(), jobSpec); err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while launching job to preview table.")
+	}
+
+	jobStatus, err := job.PollJob(ctx, jobSpec.Name(), h.JobManager, PollPreviewTableInterval, PollPreviewTableTimeout)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while waiting for the preview table job to finish.")
 	}

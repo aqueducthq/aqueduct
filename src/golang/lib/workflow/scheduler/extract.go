@@ -16,7 +16,7 @@ func generateExtractJobName() string {
 	return fmt.Sprintf("extract-operator-%s", uuid.New().String())
 }
 
-func ScheduleExtract(
+func GenerateExtractJobSpec(
 	ctx context.Context,
 	spec connector.Extract,
 	metadataPath string,

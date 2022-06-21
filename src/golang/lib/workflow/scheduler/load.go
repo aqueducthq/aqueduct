@@ -16,7 +16,7 @@ func generateLoadJobName() string {
 	return fmt.Sprintf("load-operator-%s", uuid.New().String())
 }
 
-func ScheduleLoad(
+func GenerateLoadJobSpec(
 	ctx context.Context,
 	spec connector.Load,
 	metadataPath string,
