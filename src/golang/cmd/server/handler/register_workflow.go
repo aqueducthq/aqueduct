@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
@@ -152,6 +153,11 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
+	if args.workflowDag.RuntimeConfig.Type == shared.AirflowRuntimeType {
+		// This workflow should run with an Airflow backend
+		registerWithAirflow(ctx, args, h)
+	}
+
 	txn, err := h.Database.BeginTx(ctx)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
@@ -287,5 +293,20 @@ func CreateWorkflowCronJob(
 	if err != nil {
 		return errors.Wrap(err, "unable to deploy workflow cron job")
 	}
+	return nil
+}
+
+func registerWithAirflow(
+	ctx context.Context,
+	args *registerWorkflowArgs,
+	h *RegisterWorkflowHandler,
+) error {
+	// All of these will be stored as part of runtime config
+	airflowDagId := fmt.Sprintf("%s-%s", args.workflowDag.Metadata.Name, args.workflowDag.WorkflowId)
+	operatorToTask := make(map[uuid.UUID]string)
+	operatorToMetadataPrefix := make(map[uuid.UUID]string)
+	artifactToContentPrefix := make(map[uuid.UUID]string)
+	artifactToMetadataPrefix := make(map[uuid.UUID]string)
+
 	return nil
 }

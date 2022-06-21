@@ -14,7 +14,7 @@ func generateParamJobName() string {
 	return fmt.Sprintf("param-operator-%s", uuid.New().String())
 }
 
-func ScheduleParam(
+func GenerateParamJobSpec(
 	ctx context.Context,
 	spec param.Param,
 	metadataPath string,
@@ -22,10 +22,10 @@ func ScheduleParam(
 	outputMetadataPath string,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
-) (job.Spec, error) {
+) job.Spec {
 	jobName := generateParamJobName()
 
-	jobSpec := job.NewParamSpec(
+	return job.NewParamSpec(
 		jobName,
 		storageConfig,
 		metadataPath,
@@ -33,6 +33,4 @@ func ScheduleParam(
 		outputContentPath,
 		outputMetadataPath,
 	)
-
-	return jobSpec, nil
 }
