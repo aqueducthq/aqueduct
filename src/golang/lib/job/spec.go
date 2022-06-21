@@ -59,13 +59,20 @@ type ExecutorConfiguration struct {
 }
 
 type Spec interface {
+	// Type returns the JobType of the spec.
 	Type() JobType
+	// Name returns the name of job.
+	Name() string
 }
 
 // baseSpec defines fields shared by all job specs.
 type baseSpec struct {
-	Type JobType `json:"type"  yaml:"type"`
-	Name string  `json:"name"  yaml:"name"`
+	Type    JobType `json:"type"  yaml:"type"`
+	JobName string  `json:"name"  yaml:"name"`
+}
+
+func (s *baseSpec) Name() string {
+	return s.JobName
 }
 
 type WorkflowRetentionSpec struct {
@@ -225,8 +232,8 @@ func NewWorkflowRetentionJobSpec(
 ) Spec {
 	return &WorkflowRetentionSpec{
 		baseSpec: baseSpec{
-			Type: WorkflowRetentionType,
-			Name: WorkflowRetentionName,
+			Type:    WorkflowRetentionType,
+			JobName: WorkflowRetentionName,
 		},
 
 		ExecutorConfig: &ExecutorConfiguration{
@@ -249,8 +256,8 @@ func NewWorkflowSpec(
 ) Spec {
 	return &WorkflowSpec{
 		baseSpec: baseSpec{
-			Type: WorkflowJobType,
-			Name: name,
+			Type:    WorkflowJobType,
+			JobName: name,
 		},
 		WorkflowId:    workflowId,
 		GithubManager: githubManager,
@@ -283,8 +290,8 @@ func NewFunctionSpec(
 	return &FunctionSpec{
 		basePythonSpec: basePythonSpec{
 			baseSpec: baseSpec{
-				Type: FunctionJobType,
-				Name: name,
+				Type:    FunctionJobType,
+				JobName: name,
 			},
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
@@ -314,8 +321,8 @@ func NewParamSpec(
 	return &ParamSpec{
 		basePythonSpec: basePythonSpec{
 			baseSpec: baseSpec{
-				Type: ParamJobType,
-				Name: name,
+				Type:    ParamJobType,
+				JobName: name,
 			},
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
@@ -338,8 +345,8 @@ func NewSystemMetricSpec(
 	return &SystemMetricSpec{
 		basePythonSpec: basePythonSpec{
 			baseSpec: baseSpec{
-				Type: SystemMetricJobType,
-				Name: name,
+				Type:    SystemMetricJobType,
+				JobName: name,
 			},
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
@@ -361,8 +368,8 @@ func NewAuthenticateSpec(
 	return &AuthenticateSpec{
 		basePythonSpec: basePythonSpec{
 			baseSpec: baseSpec{
-				Type: AuthenticateJobType,
-				Name: name,
+				Type:    AuthenticateJobType,
+				JobName: name,
 			},
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
@@ -389,8 +396,8 @@ func NewExtractSpec(
 	return &ExtractSpec{
 		basePythonSpec: basePythonSpec{
 			baseSpec: baseSpec{
-				Type: ExtractJobType,
-				Name: name,
+				Type:    ExtractJobType,
+				JobName: name,
 			},
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
@@ -420,8 +427,8 @@ func NewLoadSpec(
 	return &LoadSpec{
 		basePythonSpec: basePythonSpec{
 			baseSpec: baseSpec{
-				Type: LoadJobType,
-				Name: name,
+				Type:    LoadJobType,
+				JobName: name,
 			},
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
@@ -449,8 +456,8 @@ func NewLoadTableSpec(
 	return &LoadTableSpec{
 		basePythonSpec: basePythonSpec{
 			baseSpec: baseSpec{
-				Type: LoadTableJobType,
-				Name: name,
+				Type:    LoadTableJobType,
+				JobName: name,
 			},
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
@@ -461,8 +468,8 @@ func NewLoadTableSpec(
 		LoadParameters: LoadSpec{
 			basePythonSpec: basePythonSpec{
 				baseSpec: baseSpec{
-					Type: LoadJobType,
-					Name: name,
+					Type:    LoadJobType,
+					JobName: name,
 				},
 				StorageConfig: *storageConfig,
 				MetadataPath:  metadataPath,
@@ -488,8 +495,8 @@ func NewDiscoverSpec(
 	return &DiscoverSpec{
 		basePythonSpec: basePythonSpec{
 			baseSpec: baseSpec{
-				Type: DiscoverJobType,
-				Name: name,
+				Type:    DiscoverJobType,
+				JobName: name,
 			},
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,

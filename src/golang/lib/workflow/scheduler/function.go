@@ -33,7 +33,7 @@ func ScheduleFunction(
 	outputArtifactTypes []artifact.Type,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
-) (job.Spec, string, error) {
+) (job.Spec, error) {
 	entryPoint := fn.EntryPoint
 	if entryPoint == nil {
 		entryPoint = &function.EntryPoint{
@@ -62,5 +62,5 @@ func ScheduleFunction(
 		outputArtifactTypes,
 	)
 
-	return jobSpec, jobName, nil
+	return jobSpec, nil
 }

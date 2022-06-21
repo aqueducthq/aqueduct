@@ -28,10 +28,10 @@ func ScheduleExtract(
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
-) (job.Spec, string, error) {
+) (job.Spec, error) {
 	config, err := auth.ReadConfigFromSecret(ctx, spec.IntegrationId, vaultObject)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	jobName := generateExtractJobName()
@@ -49,5 +49,5 @@ func ScheduleExtract(
 		outputMetadataPath,
 	)
 
-	return jobSpec, jobName, nil
+	return jobSpec, nil
 }
