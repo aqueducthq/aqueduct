@@ -7,7 +7,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/param"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -23,7 +22,7 @@ func ScheduleParam(
 	outputMetadataPath string,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
-) (string, error) {
+) (job.Spec, string, error) {
 	jobName := generateParamJobName()
 
 	jobSpec := job.NewParamSpec(
@@ -34,10 +33,6 @@ func ScheduleParam(
 		outputContentPath,
 		outputMetadataPath,
 	)
-	err := jobManager.Launch(ctx, jobName, jobSpec)
-	if err != nil {
-		return "", errors.Wrap(err, "Unable to schedule function.")
-	}
 
-	return jobName, nil
+	return jobSpec, jobName, nil
 }
