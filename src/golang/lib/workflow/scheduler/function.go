@@ -8,7 +8,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/function"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -34,7 +33,7 @@ func ScheduleFunction(
 	outputArtifactTypes []artifact.Type,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
-) (string, error) {
+) (job.Spec, string, error) {
 	entryPoint := fn.EntryPoint
 	if entryPoint == nil {
 		entryPoint = &function.EntryPoint{
@@ -63,10 +62,5 @@ func ScheduleFunction(
 		outputArtifactTypes,
 	)
 
-	err := jobManager.Launch(ctx, jobName, jobSpec)
-	if err != nil {
-		return "", errors.Wrap(err, "Unable to schedule function.")
-	}
-
-	return jobName, nil
+	return jobSpec, jobName, nil
 }
