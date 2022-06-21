@@ -22,7 +22,7 @@ func ScheduleParam(
 	outputMetadataPath string,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
-) (job.Spec, string, error) {
+) (job.Spec, error) {
 	jobName := generateParamJobName()
 
 	jobSpec := job.NewParamSpec(
@@ -34,5 +34,5 @@ func ScheduleParam(
 		outputMetadataPath,
 	)
 
-	return jobSpec, jobName, nil
+	return jobSpec, nil
 }

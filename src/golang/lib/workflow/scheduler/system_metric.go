@@ -23,7 +23,7 @@ func ScheduleSystemMetric(
 	outputMetadataPath string,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
-) (job.Spec, string, error) {
+) (job.Spec, error) {
 	jobName := generateSystemMetricJobName()
 
 	jobSpec := job.NewSystemMetricSpec(
@@ -36,5 +36,5 @@ func ScheduleSystemMetric(
 		outputMetadataPath,
 	)
 
-	return jobSpec, jobName, nil
+	return jobSpec, nil
 }
