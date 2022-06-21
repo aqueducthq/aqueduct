@@ -7,7 +7,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/system_metric"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -24,7 +23,7 @@ func ScheduleSystemMetric(
 	outputMetadataPath string,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
-) (string, error) {
+) (job.Spec, string, error) {
 	jobName := generateSystemMetricJobName()
 
 	jobSpec := job.NewSystemMetricSpec(
@@ -36,10 +35,6 @@ func ScheduleSystemMetric(
 		outputContentPath,
 		outputMetadataPath,
 	)
-	err := jobManager.Launch(ctx, jobName, jobSpec)
-	if err != nil {
-		return "", errors.Wrap(err, "Unable to schedule function.")
-	}
 
-	return jobName, nil
+	return jobSpec, jobName, nil
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -26,10 +25,10 @@ func ScheduleExtract(
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
-) (string, error) {
+) (job.Spec, string, error) {
 	config, err := auth.ReadConfigFromSecret(ctx, spec.IntegrationId, vaultObject)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 
 	jobName := generateExtractJobName()
@@ -45,10 +44,5 @@ func ScheduleExtract(
 		outputMetadataPath,
 	)
 
-	err = jobManager.Launch(ctx, jobName, jobSpec)
-	if err != nil {
-		return "", errors.Wrap(err, "Unable to schedule Extract.")
-	}
-
-	return jobName, nil
+	return jobSpec, jobName, nil
 }
