@@ -22,6 +22,7 @@ import (
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
+	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -307,6 +308,46 @@ func registerWithAirflow(
 	operatorToMetadataPrefix := make(map[uuid.UUID]string)
 	artifactToContentPrefix := make(map[uuid.UUID]string)
 	artifactToMetadataPrefix := make(map[uuid.UUID]string)
+
+	operatorToJobSpec := make(map[uuid.UUID]job.Spec, len(args.workflowDag.Operators))
+	for _, op := range args.workflowDag.Operators {
+		opJobSpec, err := scheduler.GenerateOperatorJobSpec(
+			ctx,
+			op.Spec,
+			nil,
+			nil,
+			"",
+			nil,
+			nil,
+			nil,
+			nil,
+			h.StorageConfig,
+			h.JobManager,
+			h.Vault,
+		)
+		if err != nil {
+			return err
+		}
+
+		operatorToJobSpec[op.Id] = opJobSpec
+	}
+
+	airflowJobSpec := job.NewCompileAirflowSpec(
+		"",
+		h.StorageConfig,
+		"",
+		airflowDagId,
+		nil,
+		nil,
+	)
+
+	if err := h.JobManager.Launch(ctx, airflowJobSpec.Name(), airflowJobSpec); err != nil {
+		return err
+	}
+
+	// Read Airflow dag.py from storage at output content path
+
+	// Return dag.py file back to user
 
 	return nil
 }
