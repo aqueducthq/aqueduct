@@ -496,6 +496,32 @@ func NewDiscoverSpec(
 	}
 }
 
+// NewCompileAirflowSpec constructs a Spec for a CompileAirflowJob.
+func NewCompileAirflowSpec(
+	name string,
+	storageConfig *shared.StorageConfig,
+	metadataPath string,
+	outputContentPath string,
+	dagId string,
+	taskSpecs map[string]Spec,
+	edges map[string]string,
+) Spec {
+	return &CompileAirflowSpec{
+		basePythonSpec: basePythonSpec{
+			baseSpec: baseSpec{
+				Type:    CompileAirflowJobType,
+				JobName: name,
+			},
+			StorageConfig: *storageConfig,
+			MetadataPath:  metadataPath,
+		},
+		OutputContentPath: outputContentPath,
+		DagId:             dagId,
+		TaskSpecs:         taskSpecs,
+		Edges:             edges,
+	}
+}
+
 // `EncodeSpec` first serialize `spec` according to `SerializationType` and returns the base64 encoded string.
 // The encoded string can be safely passed around without any escaping issue (e.g. as envVar)
 func EncodeSpec(spec Spec, serializationType SerializationType) (string, error) {
