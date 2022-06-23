@@ -15,6 +15,7 @@ import (
 	_000010 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000010_add_exec_state_column"
 	_000011 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000011_exec_state_column_backfill"
 	_000012 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000012_drop_metadata_column"
+	_000013 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000013_add_workflow_dag_engine_config"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -76,7 +77,6 @@ func init() {
 		downPostgres: _000009.Down,
 		name:         "backfill metadata in artifact_results",
 	}
-
 	registeredMigrations[10] = &migration{
 		upPostgres: _000010.UpPostgres, upSqlite: _000010.UpSqlite,
 		downPostgres: _000010.DownPostgres,
@@ -93,5 +93,11 @@ func init() {
 		upPostgres: _000012.UpPostgres, upSqlite: _000012.UpSqlite,
 		downPostgres: _000012.DownPostgres,
 		name:         "remove metadata in operator_result",
+	}
+
+	registeredMigrations[13] = &migration{
+		upPostgres: _000013.UpPostgres, upSqlite: _000013.UpSqlite,
+		downPostgres: _000013.DownPostgres,
+		name:         "add workflow_dag.engine_config",
 	}
 }

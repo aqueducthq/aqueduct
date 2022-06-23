@@ -16,7 +16,7 @@ import distro
 import requests
 import yaml
 
-SCHEMA_VERION = "12"
+SCHEMA_VERION = "13"
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")

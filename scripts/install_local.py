@@ -25,7 +25,7 @@ server_directory = join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = join(os.environ["HOME"], ".aqueduct", "ui")
 
 # Make sure to update this if there is any schema change we want to include in the upgrade.
-SCHEMA_VERSION = "12"
+SCHEMA_VERSION = "13"
 
 
 def execute_command(args, cwd=None):
