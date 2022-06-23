@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
@@ -22,7 +21,6 @@ import (
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
-	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -38,7 +36,8 @@ import (
 //		`dag`: a serialized `workflow_dag` object
 //		`<operator_id>`: zip file associated with operator for the `operator_id`.
 //  	`<operator_id>`: ... (more operator files)
-// Response: none
+// Response:
+//  - Optional File
 
 type RegisterWorkflowHandler struct {
 	PostHandler
@@ -74,6 +73,9 @@ type registerWorkflowArgs struct {
 type registerWorkflowResponse struct {
 	// The newly registered workflow's id.
 	Id uuid.UUID `json:"id"`
+	// Optional payload depending on the backend. For Airflow workflows,
+	// this is the Airflow DAG Python file.
+	Payload []byte `json:"payload"`
 }
 
 func (*RegisterWorkflowHandler) Name() string {
@@ -156,7 +158,6 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	if args.workflowDag.RuntimeConfig.Type == shared.AirflowRuntimeType {
 		// This workflow should run with an Airflow backend
-		registerWithAirflow(ctx, args, h)
 	}
 
 	txn, err := h.Database.BeginTx(ctx)
@@ -294,60 +295,5 @@ func CreateWorkflowCronJob(
 	if err != nil {
 		return errors.Wrap(err, "unable to deploy workflow cron job")
 	}
-	return nil
-}
-
-func registerWithAirflow(
-	ctx context.Context,
-	args *registerWorkflowArgs,
-	h *RegisterWorkflowHandler,
-) error {
-	// All of these will be stored as part of runtime config
-	airflowDagId := fmt.Sprintf("%s-%s", args.workflowDag.Metadata.Name, args.workflowDag.WorkflowId)
-	operatorToTask := make(map[uuid.UUID]string)
-	operatorToMetadataPrefix := make(map[uuid.UUID]string)
-	artifactToContentPrefix := make(map[uuid.UUID]string)
-	artifactToMetadataPrefix := make(map[uuid.UUID]string)
-
-	operatorToJobSpec := make(map[uuid.UUID]job.Spec, len(args.workflowDag.Operators))
-	for _, op := range args.workflowDag.Operators {
-		opJobSpec, err := scheduler.GenerateOperatorJobSpec(
-			ctx,
-			op.Spec,
-			nil,
-			nil,
-			"",
-			nil,
-			nil,
-			nil,
-			nil,
-			h.StorageConfig,
-			h.JobManager,
-			h.Vault,
-		)
-		if err != nil {
-			return err
-		}
-
-		operatorToJobSpec[op.Id] = opJobSpec
-	}
-
-	airflowJobSpec := job.NewCompileAirflowSpec(
-		"",
-		h.StorageConfig,
-		"",
-		airflowDagId,
-		nil,
-		nil,
-	)
-
-	if err := h.JobManager.Launch(ctx, airflowJobSpec.Name(), airflowJobSpec); err != nil {
-		return err
-	}
-
-	// Read Airflow dag.py from storage at output content path
-
-	// Return dag.py file back to user
-
 	return nil
 }
