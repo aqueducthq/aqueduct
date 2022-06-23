@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
+	"github.com/aqueducthq/aqueduct/lib/backend/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -23,6 +24,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/google/martian/log"
 	"github.com/google/uuid"
 )
 
@@ -125,6 +127,10 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 	}
 	isUpdate := collidingWorkflow != nil
 	if isUpdate {
+		if dagSummary.Dag.RuntimeConfig.Type == shared.AirflowRuntimeType {
+			return nil, http.StatusBadRequest, errors.New("Updating an Airflow workflow is currently not supported.")
+		}
+
 		// Since the libraries we call use the workflow id to tell whether a workflow already exists.
 		dagSummary.Dag.WorkflowId = collidingWorkflow.Id
 	}
@@ -138,6 +144,8 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 			return nil, http.StatusBadRequest, err
 		}
 	}
+
+	// TODO: Validate workflow runtime
 
 	return &registerWorkflowArgs{
 		AqContext:                aqContext,
@@ -154,10 +162,6 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	if _, err := operator_utils.UploadOperatorFiles(ctx, args.workflowDag, args.operatorIdToFileContents); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
-	}
-
-	if args.workflowDag.RuntimeConfig.Type == shared.AirflowRuntimeType {
-		// This workflow should run with an Airflow backend
 	}
 
 	txn, err := h.Database.BeginTx(ctx)
@@ -205,19 +209,41 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to update existing workflow.")
 		}
 	} else {
-		// We should create cron jobs for newly created, non-manually triggered workflows.
-		if string(args.workflowDag.Metadata.Schedule.CronSchedule) != "" {
-			err = CreateWorkflowCronJob(
+		// Create relevant execution object depending on the runtime, i.e. cron job for Aqueduct
+		// or DAG Python file for Airflow
+		switch args.workflowDag.RuntimeConfig.Type {
+		case shared.AirflowRuntimeType:
+			dagFile, err := createWorkflowAirflowDag(
 				ctx,
-				args.workflowDag.Metadata,
-				h.Database.Config(),
-				h.Vault,
+				args.workflowDag,
+				h.StorageConfig,
 				h.JobManager,
-				h.GithubManager,
+				h.Vault,
+				txn,
+				h.WorkflowDagWriter,
 			)
 			if err != nil {
-				return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
+				return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow with Airflow backend.")
 			}
+
+			log.Info(dagFile)
+			// TODO: Save dag file to response object
+		case shared.AqueductRuntimeType:
+			if string(args.workflowDag.Metadata.Schedule.CronSchedule) != "" {
+				// Only create a workflow cron job if its trigger is periodic
+				if err := CreateWorkflowCronJob(
+					ctx,
+					args.workflowDag.Metadata,
+					h.Database.Config(),
+					h.Vault,
+					h.JobManager,
+					h.GithubManager,
+				); err != nil {
+					return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
+				}
+			}
+		default:
+			return emptyResp, http.StatusBadRequest, errors.Newf("Unable to create workflow with unknown backend %v", args.workflowDag.RuntimeConfig.Type)
 		}
 	}
 
@@ -225,20 +251,23 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	_, _, err = (&RefreshWorkflowHandler{
-		Database:       h.Database,
-		JobManager:     h.JobManager,
-		GithubManager:  h.GithubManager,
-		Vault:          h.Vault,
-		WorkflowReader: h.WorkflowReader,
-	}).Perform(
-		ctx,
-		&RefreshWorkflowArgs{
-			WorkflowId: workflowId,
-		},
-	)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow run.")
+	if args.workflowDag.RuntimeConfig.Type != shared.AirflowRuntimeType {
+		// Airflow workflows cannot be triggered yet, since the user must register the DAG
+		_, _, err = (&RefreshWorkflowHandler{
+			Database:       h.Database,
+			JobManager:     h.JobManager,
+			GithubManager:  h.GithubManager,
+			Vault:          h.Vault,
+			WorkflowReader: h.WorkflowReader,
+		}).Perform(
+			ctx,
+			&RefreshWorkflowArgs{
+				WorkflowId: workflowId,
+			},
+		)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow run.")
+		}
 	}
 
 	if !args.isUpdate {
@@ -262,7 +291,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	return registerWorkflowResponse{Id: workflowId}, http.StatusOK, nil
 }
 
-// CreateWorkflowCronJob creates a k8s cron job
+// CreateWorkflowCronJob creates a cron job
 // that will run the workflow on the specified schedule.
 func CreateWorkflowCronJob(
 	ctx context.Context,
@@ -296,4 +325,25 @@ func CreateWorkflowCronJob(
 		return errors.Wrap(err, "unable to deploy workflow cron job")
 	}
 	return nil
+}
+
+// createWorkflowAirflowDag takes a workflow and generates the corresponding Airflow
+// DAG Python file for it. It returns this Python file and error, if any.
+func createWorkflowAirflowDag(
+	ctx context.Context,
+	dag *workflow_dag.WorkflowDag,
+	storageConfig *shared.StorageConfig,
+	jobManager job.JobManager,
+	vault vault.Vault,
+	db database.Database,
+	workflowDagWriter workflow_dag.Writer,
+) ([]byte, error) {
+	return airflow.RegisterWorkflow(
+		ctx,
+		dag,
+		storageConfig,
+		jobManager,
+		vault,
+		db,
+	)
 }

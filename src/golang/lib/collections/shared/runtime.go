@@ -15,17 +15,20 @@ const (
 )
 
 type RuntimeConfig struct {
-	Type       RuntimeType `yaml:"type" json:"type"`
-	S3Config   *S3Config   `yaml:"s3Config" json:"s3_config,omitempty"`
-	FileConfig *FileConfig `yaml:"fileConfig" json:"file_config,omitempty"`
+	Type           RuntimeType     `yaml:"type" json:"type"`
+	AqueductConfig *AqueductConfig `yaml:"aqueductConfig" json:"aqueduct_config,omitempty"`
+	AirflowConfig  *AirflowConfig  `yaml:"airflowConfig" json:"airflow_config,omitempty"`
 }
 
 type AqueductConfig struct{}
 
 type AirflowConfig struct {
-	DagId           string
-	OperatorToTask  map[uuid.UUID]string
-	StoragePrefixes map[uuid.UUID]string
+	IntegrationId              uuid.UUID
+	DagId                      string
+	OperatorToTask             map[uuid.UUID]string
+	OperatorMetadataPathPrefix map[uuid.UUID]string
+	ArtifactContentPathPrefix  map[uuid.UUID]string
+	ArtifactMetadataPathPrefix map[uuid.UUID]string
 }
 
 func (r *RuntimeConfig) Scan(value interface{}) error {

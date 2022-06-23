@@ -13,6 +13,7 @@ const (
 	WorkflowIdColumn    = "workflow_id"
 	CreatedAtColumn     = "created_at"
 	StorageConfigColumn = "storage_config"
+	RuntimeConfigColumn = "runtime_config"
 )
 
 // Returns a joined string of all WorkflowDag columns.
@@ -23,6 +24,7 @@ func allColumns() string {
 			WorkflowIdColumn,
 			CreatedAtColumn,
 			StorageConfigColumn,
+			RuntimeConfigColumn,
 		},
 		",",
 	)
@@ -36,6 +38,7 @@ func allColumnsWithPrefix() string {
 			fmt.Sprintf("%s.%s", tableName, WorkflowIdColumn),
 			fmt.Sprintf("%s.%s", tableName, CreatedAtColumn),
 			fmt.Sprintf("%s.%s", tableName, StorageConfigColumn),
+			fmt.Sprintf("%s.%s", tableName, RuntimeConfigColumn),
 		},
 		",",
 	)
