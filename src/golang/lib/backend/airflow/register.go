@@ -17,7 +17,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -34,11 +33,12 @@ const (
 func RegisterWorkflow(
 	ctx context.Context,
 	dag *workflow_dag.WorkflowDag,
-	db database.Database,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
 	vault vault.Vault,
-) error {
+	db database.Database,
+	workflowDagWriter workflow_dag.Writer,
+) ([]byte, error) {
 	dagId := generateDagId(dag.Metadata.Name, dag.WorkflowId)
 
 	operatorToTask := make(map[uuid.UUID]string, len(dag.Operators))
@@ -61,7 +61,7 @@ func RegisterWorkflow(
 		for _, artifactId := range op.Inputs {
 			input, ok := dag.Artifacts[artifactId]
 			if !ok {
-				return errors.Newf("cannot find artifact with ID %v", artifactId)
+				return nil, errors.Newf("cannot find artifact with ID %v", artifactId)
 			}
 
 			inputArtifactSpecs = append(inputArtifactSpecs, input.Spec)
@@ -75,7 +75,7 @@ func RegisterWorkflow(
 		for _, artifactId := range op.Outputs {
 			output, ok := dag.Artifacts[artifactId]
 			if !ok {
-				return errors.Newf("cannot find artifact with ID %v", artifactId)
+				return nil, errors.Newf("cannot find artifact with ID %v", artifactId)
 			}
 
 			outputArtifactSpecs = append(outputArtifactSpecs, output.Spec)
@@ -98,7 +98,7 @@ func RegisterWorkflow(
 			vault,
 		)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		taskId := generateTaskId(op.Name, op.Id)
@@ -126,16 +126,16 @@ func RegisterWorkflow(
 	)
 
 	if err := jobManager.Launch(ctx, jobSpec.Name(), jobSpec); err != nil {
-		return err
+		return nil, err
 	}
 
 	jobStatus, err := job.PollJob(ctx, jobSpec.Name(), jobManager, pollCompileAirflowInterval, pollCompileAirflowTimeout)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if jobStatus == shared.FailedExecutionStatus {
-		return errors.New("Compile Airflow job failed.")
+		return nil, errors.New("Compile Airflow job failed.")
 	}
 
 	var metadata operator_result.Metadata
@@ -145,19 +145,36 @@ func RegisterWorkflow(
 		operatorMetadataPath,
 		&metadata,
 	); err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(metadata.Error) > 0 {
-		return errors.Newf("Compile Airflow job failed: %v", metadata.Error)
+		return nil, errors.Newf("Compile Airflow job failed: %v", metadata.Error)
 	}
 
 	airflowDagFile, err := storage.NewStorage(storageConfig).Get(ctx, operatorOutputPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	log.Info(airflowDagFile)
+	// Update the AirflowRuntimeConfig for `dag`
+	newRuntimeConfig := dag.RuntimeConfig
+	newRuntimeConfig.AirflowConfig.OperatorToTask = operatorToTask
+	newRuntimeConfig.AirflowConfig.OperatorMetadataPathPrefix = operatorToMetadataPathPrefix
+	newRuntimeConfig.AirflowConfig.ArtifactContentPathPrefix = artifactToContentPathPrefix
+	newRuntimeConfig.AirflowConfig.ArtifactMetadataPathPrefix = artifactToMetadataPathPrefix
 
-	return nil
+	_, err = workflowDagWriter.UpdateWorkflowDag(
+		ctx,
+		dag.Id,
+		map[string]interface{}{
+			workflow_dag.RuntimeConfigColumn: &newRuntimeConfig,
+		},
+		db,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return airflowDagFile, nil
 }
