@@ -345,5 +345,6 @@ func createWorkflowAirflowDag(
 		jobManager,
 		vault,
 		db,
+		workflowDagWriter,
 	)
 }
