@@ -19,10 +19,9 @@ class CompileAirflowSpec(BaseModel):
     storage_config: config.StorageConfig
     metadata_path: str
     output_content_path: str
-    workflow_id: str
     dag_id: str
     task_specs: Dict[str, OperatorSpec]
-    edges: Dict[str, str]
+    task_edges: Dict[str, str]
 
 
 def parse_spec(spec_json: str) -> CompileAirflowSpec:
