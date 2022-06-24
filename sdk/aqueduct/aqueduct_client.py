@@ -25,6 +25,7 @@ from .flow import Flow
 from .flow_run import _show_dag
 from .github import Github
 from .integrations.integration import IntegrationInfo
+from .integrations.airflow import AirflowIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
@@ -226,6 +227,12 @@ class Client:
                 dag=self._dag,
                 metadata=integration_info,
             )
+        elif integration_info.service == ServiceType.AIRFLOW:
+            return AirflowIntegration(
+                api_client=self._api_client,
+                dag=self._dag,
+                metadata=integration_info,
+            )    
         else:
             raise InvalidIntegrationException(
                 "This method does not support loading integration of type %s"
