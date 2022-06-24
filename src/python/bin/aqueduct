@@ -129,7 +129,7 @@ def update_server_version():
     download_server_binaries()
     update_executable_permissions()
 
-    execute_command([os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "9"])
+    execute_command([os.path.join(server_directory, "bin", "migrator"), "--type", "sqlite", "goto", "10"])
 
 def generate_welcome_message(expose, port):
     if not expose:
