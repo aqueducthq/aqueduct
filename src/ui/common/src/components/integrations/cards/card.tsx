@@ -9,6 +9,7 @@ import {
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import WorkflowStatus from '../../workflows/workflowStatus';
+import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
 import { LoadSpecsCard } from './loadSpecCard';
@@ -117,6 +118,9 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
     case 'S3':
       serviceCard = <S3Card integration={integration} />;
       break;
+    case 'Airflow':
+      serviceCard = <AirflowCard integration={integration} />;
+      break;  
     default:
       serviceCard = null;
   }

@@ -86,6 +86,12 @@ export type S3Config = {
 
 export type AqueductDemoConfig = Record<string, never>;
 
+export type AirflowConfig = {
+  host: string;
+  username: string;
+  password: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -97,7 +103,8 @@ export type IntegrationConfig =
   | GoogleSheetsConfig
   | SalesforceConfig
   | S3Config
-  | AqueductDemoConfig;
+  | AqueductDemoConfig
+  | AirflowConfig;
 
 export type Service =
   | 'Postgres'
@@ -108,7 +115,8 @@ export type Service =
   | 'MariaDB'
   | 'S3'
   | 'CSV'
-  | 'Aqueduct Demo';
+  | 'Aqueduct Demo'
+  | 'Airflow';
 
 type Info = {
   logo: string;
@@ -255,6 +263,10 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['SQLite']: {
     logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/sqlite_banner.png',
     activated: false,
+  },
+  ['Airflow']: {
+    logo: 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations/sqlite_banner.png',
+    activated: true,
   },
 };
 
