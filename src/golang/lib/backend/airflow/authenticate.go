@@ -15,15 +15,18 @@ func Authenticate(ctx context.Context, authConf auth.Config) error {
 	}
 
 	airflowConf := airflow.NewConfiguration()
-	airflowConf.Host = conf.host
+	airflowConf.Host = conf.Host
+	airflowConf.Scheme = "http"
 	client := airflow.NewAPIClient(airflowConf)
 
 	cred := airflow.BasicAuth{
-		UserName: conf.username,
-		Password: conf.password,
+		UserName: conf.Username,
+		Password: conf.Password,
 	}
 	airflowCtx := context.WithValue(ctx, airflow.ContextBasicAuth, cred)
 
+	// Test Airflow config by listing all DAGs
 	_, _, err = client.DAGApi.GetDags(airflowCtx).Execute()
+
 	return err
 }
