@@ -28,11 +28,12 @@ def run(spec: spec.CompileAirflowSpec):
 
     storage = parse.parse_storage(spec.storage_config)
     try:
-        compile(spec)
-        # utils.write_operator_metadata(storage, spec.metadata_path, err="", logs={})
+        dag_file = compile(spec)
+        utils.write_operator_metadata(storage, spec.metadata_path, err="", logs={})
+        utils.write_compile_airflow_output(storage, spec.output_content_path, dag_file)
     except Exception as e:
         traceback.print_exc()
-        # utils.write_operator_metadata(storage, spec.metadata_path, err=str(e), logs={})
+        utils.write_operator_metadata(storage, spec.metadata_path, err=str(e), logs={})
         sys.exit(1)
 
 def compile(spec: spec.CompileAirflowSpec) -> bytes:
@@ -61,10 +62,10 @@ def compile(spec: spec.CompileAirflowSpec) -> bytes:
         dag_id=spec.dag_id,
         workflow_id=spec.workflow_id,
         tasks=tasks,
-        edges=spec.edges,
+        edges=spec.task_edges,
     )
 
     with open('dag.py', "w") as f:
         f.write(r)
 
-    return None
+    return r

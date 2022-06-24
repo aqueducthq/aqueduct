@@ -253,3 +253,10 @@ def write_discover_results(storage: Storage, path: str, tables: List[str]):
     table_names_str = json.dumps(tables)
 
     storage.put(path, bytes(table_names_str, encoding=_DEFAULT_ENCODING))
+
+
+def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes):
+    """
+    Writes the provided Airflow DAG file to storage.
+    """
+    storage.put(path, dag_file)
