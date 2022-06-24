@@ -43,7 +43,7 @@ class AirflowRuntimeConfig(BaseModel):
     integration_id: uuid.UUID
 
 class RuntimeConfig(BaseModel):
-    type: RuntimeType
+    type: RuntimeType = RuntimeType.AQUEDUCT
     aqueduct_config: Optional[AqueductRuntimeConfig]
     airflow_config: Optional[AirflowRuntimeConfig]
 

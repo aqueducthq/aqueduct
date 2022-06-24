@@ -92,7 +92,7 @@ class Client:
         self._connected_integrations: Dict[
             str, IntegrationInfo
         ] = self._api_client.list_integrations()
-        self._dag = DAG(metadata=Metadata())
+        self._dag = DAG(metadata=Metadata(), runtime_config=RuntimeConfig())
 
         # Will show graph if in an ipynb or Python console, but not if running a Python script.
         self._in_notebook_or_console_context = (not hasattr(main, "__file__")) and (
