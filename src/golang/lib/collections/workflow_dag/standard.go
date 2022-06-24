@@ -22,12 +22,13 @@ func (w *standardWriterImpl) CreateWorkflowDag(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	storageConfig *shared.StorageConfig,
+	runtimeConfig *shared.RuntimeConfig,
 	db database.Database,
 ) (*WorkflowDag, error) {
-	insertColumns := []string{WorkflowIdColumn, CreatedAtColumn, StorageConfigColumn}
+	insertColumns := []string{WorkflowIdColumn, CreatedAtColumn, StorageConfigColumn, RuntimeConfigColumn}
 	insertWorkflowDagStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
-	args := []interface{}{workflowId, time.Now(), storageConfig}
+	args := []interface{}{workflowId, time.Now(), storageConfig, runtimeConfig}
 
 	var workflowDag WorkflowDag
 	err := db.Query(ctx, &workflowDag, insertWorkflowDagStmt, args...)

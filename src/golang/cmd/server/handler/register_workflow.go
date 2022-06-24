@@ -24,8 +24,8 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/google/martian/log"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // Route: /workflow/register
@@ -226,7 +226,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 				return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow with Airflow backend.")
 			}
 
-			log.Info(dagFile)
+			log.Infof(string(dagFile))
 			// TODO: Save dag file to response object
 		case shared.AqueductRuntimeType:
 			if string(args.workflowDag.Metadata.Schedule.CronSchedule) != "" {
