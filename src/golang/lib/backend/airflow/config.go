@@ -7,9 +7,9 @@ import (
 )
 
 type config struct {
-	host     string
-	username string
-	password string
+	Host     string `json:"host"  yaml:"host"`
+	Username string `json:"username"  yaml:"username"`
+	Password string `json:"password"  yaml:"password"`
 }
 
 // parseConfig takes in an auth.Config and parses into a config struct.
