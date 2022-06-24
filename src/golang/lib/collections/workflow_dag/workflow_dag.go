@@ -60,6 +60,7 @@ type Writer interface {
 		ctx context.Context,
 		workflowId uuid.UUID,
 		storageConfig *shared.StorageConfig,
+		runtimeConfig *shared.RuntimeConfig,
 		db database.Database,
 	) (*WorkflowDag, error)
 	UpdateWorkflowDag(
