@@ -12,7 +12,7 @@ from aqueduct.error import (
 )
 
 from aqueduct.artifact import Artifact, get_artifact_type
-from aqueduct.enums import OperatorType, TriggerType, ArtifactType
+from aqueduct.enums import OperatorType, TriggerType, ArtifactType, RuntimeType
 from aqueduct.operators import Operator, get_operator_type, serialize_parameter_value
 
 
@@ -35,6 +35,18 @@ class Metadata(BaseModel):
     retention_policy: Optional[RetentionPolicy]
 
 
+class AqueductRuntimeConfig(BaseModel):
+    pass
+
+
+class AirflowRuntimeConfig(BaseModel):
+    integration_id: uuid.UUID
+
+class RuntimeConfig(BaseModel):
+    type: RuntimeType
+    aqueduct_config: Optional[AqueductRuntimeConfig]
+    airflow_config: Optional[AirflowRuntimeConfig]
+
 class DAG(BaseModel):
     operators: Dict[str, Operator] = {}
     artifacts: Dict[str, Artifact] = {}
@@ -45,6 +57,8 @@ class DAG(BaseModel):
 
     # These fields must be set when publishing the workflow
     metadata: Metadata
+
+    runtime_config: RuntimeConfig
 
     class Config:
         fields = {

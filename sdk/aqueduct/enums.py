@@ -128,3 +128,8 @@ class ArtifactType(Enum, metaclass=MetaEnum):
     NUMBER = "number"
     BOOL = "boolean"
     PARAM = "param"
+
+
+class RuntimeType(Enum, metaclass=MetaEnum):
+    AQUEDUCT = "aqueduct"
+    AIRFLOW = "airflow"
