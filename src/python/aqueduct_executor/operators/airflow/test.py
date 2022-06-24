@@ -1,7 +1,7 @@
 from aqueduct_executor.operators.airflow import execute, spec
 from aqueduct_executor.operators.utils import enums
 from aqueduct_executor.operators.utils.storage import config
-from aqueduct_executor.operators.connectors.tabular import spec as conn_spec, common, config as conn_config, extract
+from aqueduct_executor.operators.connectors.tabular import spec as conn_spec, common, extract
 from aqueduct_executor.operators.function_executor import spec as func_spec
 from aqueduct_executor.operators.param_executor import spec as param_spec
 
@@ -62,7 +62,7 @@ def main():
                 output_artifact_types=[enums.OutputArtifactType.TABLE],
             )
         },
-        edges={"a": "b"}
+        task_edges={"a": "b"}
     )
     execute.run(aspec)
 
