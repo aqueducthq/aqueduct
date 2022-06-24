@@ -8,6 +8,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/lib/backend/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -158,7 +159,7 @@ func ConnectIntegration(
 	return http.StatusOK, nil
 }
 
-// validateConfig authenticates the config provided.
+// ValidateConfig authenticates the config provided.
 // It returns a status code and an error, if any.
 func ValidateConfig(
 	ctx context.Context,
@@ -166,6 +167,12 @@ func ValidateConfig(
 	jobManager job.JobManager,
 	storageConfig *shared.StorageConfig,
 ) (int, error) {
+	if args.Service == integration.Airflow {
+		// Airflow authentication is performed via the Go client
+		// instead of the Python client, so we don't launch a job for it.
+		return validateAirflowConfig(ctx, args)
+	}
+
 	// Schedule authenticate job
 	jobMetadataPath := fmt.Sprintf("authenticate-%s", args.RequestId)
 
@@ -219,4 +226,17 @@ func ValidateConfig(
 	return http.StatusInternalServerError, errors.New(
 		"Unable to authenticate credentials, we couldn't obtain more context at this point.",
 	)
+}
+
+// validateAirflowConfig authenticates the Airflow config provided.
+// It returns a status code and an error, if any.
+func validateAirflowConfig(
+	ctx context.Context,
+	args *ConnectIntegrationArgs,
+) (int, error) {
+	if err := airflow.Authenticate(ctx, args.Config); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
 }
