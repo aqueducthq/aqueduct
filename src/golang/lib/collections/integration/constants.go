@@ -55,6 +55,7 @@ const (
 	AqueductDemo Service = "Aqueduct Demo"
 	Github       Service = "Github"
 	Sqlite       Service = "SQLite"
+	Airflow      Service = "Airflow"
 
 	DemoDbIntegrationName = "aqueduct_demo"
 )

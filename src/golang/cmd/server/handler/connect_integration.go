@@ -8,6 +8,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/lib/backend/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -159,7 +160,7 @@ func ConnectIntegration(
 	return http.StatusOK, nil
 }
 
-// validateConfig authenticates the config provided.
+// ValidateConfig authenticates the config provided.
 // It returns a status code and an error, if any.
 func ValidateConfig(
 	ctx context.Context,
@@ -167,6 +168,12 @@ func ValidateConfig(
 	jobManager job.JobManager,
 	storageConfig *shared.StorageConfig,
 ) (int, error) {
+	if args.Service == integration.Airflow {
+		// Airflow authentication is performed via the Go client
+		// instead of the Python client, so we don't launch a job for it.
+		return validateAirflowConfig(ctx, args)
+	}
+
 	// Schedule authenticate job
 	jobMetadataPath := fmt.Sprintf("authenticate-%s", args.RequestId)
 
@@ -210,4 +217,17 @@ func ValidateConfig(
 	}
 
 	return http.StatusBadRequest, errors.Newf("Unable to authenticate credentials: %v", metadata.Error)
+}
+
+// validateAirflowConfig authenticates the Airflow config provided.
+// It returns a status code and an error, if any.
+func validateAirflowConfig(
+	ctx context.Context,
+	args *ConnectIntegrationArgs,
+) (int, error) {
+	if err := airflow.Authenticate(ctx, args.Config); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
 }
