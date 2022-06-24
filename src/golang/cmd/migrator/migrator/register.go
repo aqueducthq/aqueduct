@@ -12,6 +12,7 @@ import (
 	_000007 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000007_workflow_dag_edge_pk"
 	_000008 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000008_delete_s3_config"
 	_000009 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000009_metadata_interface_backfill"
+	_000010 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000010_add_workflow_dag_runtime_config"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -72,5 +73,10 @@ func init() {
 		upPostgres: _000009.Up, upSqlite: _000009.Up,
 		downPostgres: _000009.Down,
 		name:         "backfill metadata in artifact_results",
+	}
+	registeredMigrations[10] = &migration{
+		upPostgres: _000010.UpPostgres, upSqlite: _000010.UpSqlite,
+		downPostgres: _000010.DownPostgres,
+		name:         "add workflow_dag.runtime_config",
 	}
 }
