@@ -77,7 +77,7 @@ type registerWorkflowResponse struct {
 	Id uuid.UUID `json:"id"`
 	// Optional payload depending on the backend. For Airflow workflows,
 	// this is the Airflow DAG Python file.
-	Payload []byte `json:"payload"`
+	Payload string `json:"payload"`
 }
 
 func (*RegisterWorkflowHandler) Name() string {
@@ -187,6 +187,8 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
+	resp := registerWorkflowResponse{Id: workflowId}
+
 	args.workflowDag.Metadata.Id = workflowId
 
 	if args.isUpdate {
@@ -228,6 +230,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 			log.Infof(string(dagFile))
 			// TODO: Save dag file to response object
+			resp.Payload = string(dagFile)
 		case shared.AqueductRuntimeType:
 			if string(args.workflowDag.Metadata.Schedule.CronSchedule) != "" {
 				// Only create a workflow cron job if its trigger is periodic
@@ -288,7 +291,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		}
 	}
 
-	return registerWorkflowResponse{Id: workflowId}, http.StatusOK, nil
+	return resp, http.StatusOK, nil
 }
 
 // CreateWorkflowCronJob creates a cron job
@@ -338,6 +341,7 @@ func createWorkflowAirflowDag(
 	db database.Database,
 	workflowDagWriter workflow_dag.Writer,
 ) ([]byte, error) {
+	log.Info("Creating Airflow workflow")
 	return airflow.RegisterWorkflow(
 		ctx,
 		dag,
