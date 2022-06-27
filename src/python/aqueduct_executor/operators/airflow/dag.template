@@ -85,5 +85,5 @@ with DAG(
     {% endfor %}
 
 {% for k, v in edges.items() %}
-    {{ k }}.set_downstream({{ v }})
+    {{ task_to_alias[k] }}.set_downstream({{ task_to_alias[v] }})
 {% endfor %}

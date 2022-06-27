@@ -29,8 +29,8 @@ def run(spec: spec.CompileAirflowSpec):
     storage = parse.parse_storage(spec.storage_config)
     try:
         dag_file = compile(spec)
-        utils.write_operator_metadata(storage, spec.metadata_path, err="", logs={})
         utils.write_compile_airflow_output(storage, spec.output_content_path, dag_file)
+        utils.write_operator_metadata(storage, spec.metadata_path, err="", logs={})
     except Exception as e:
         traceback.print_exc()
         utils.write_operator_metadata(storage, spec.metadata_path, err=str(e), logs={})
@@ -44,28 +44,42 @@ def compile(spec: spec.CompileAirflowSpec) -> bytes:
 
     # Init Airflow tasks
     tasks = []
+    task_to_alias = {}
     i = 0
     for task_id, task_spec in spec.task_specs.items():
         
         # Todo figure out dependencies
 
-        t = Task(task_id, task_spec, "t{}".format(i))
+        alias = "t{}".format(i)
+        t = Task(task_id, task_spec, alias)
         tasks.append(t)
         i += 1
 
-    env = Environment(loader=FileSystemLoader("./aqueduct_executor/operators/airflow"))
+        task_to_alias[task_id] = alias
 
-    print(os.getcwd())
+    home = os.environ.get("HOME")
+    path = os.path.join(home, ".aqueduct", "server/bin")
+    env = Environment(loader=FileSystemLoader(path))
+
+    print('The current working directory is: ', os.getcwd())
+    print('The path is ', path)
 
     template = env.get_template("dag.template")
     r = template.render(
         dag_id=spec.dag_id,
-        workflow_id=spec.workflow_id,
         tasks=tasks,
         edges=spec.task_edges,
+        task_to_alias=task_to_alias,
     )
 
     with open('dag.py', "w") as f:
         f.write(r)
 
-    return r
+    print("Type is: ", type(r))
+
+    r_bytes = str.encode(r)
+
+    print("Type is: ", type(r_bytes))
+
+
+    return r_bytes
