@@ -29,14 +29,15 @@ def run(spec: spec.CompileAirflowSpec):
     storage = parse.parse_storage(spec.storage_config)
     try:
         dag_file = compile(spec)
-        utils.write_compile_airflow_output(storage, spec.output_content_path, dag_file)
+        data = str.encode(dag_file)
+        utils.write_compile_airflow_output(storage, spec.output_content_path, data)
         utils.write_operator_metadata(storage, spec.metadata_path, err="", logs={})
     except Exception as e:
         traceback.print_exc()
         utils.write_operator_metadata(storage, spec.metadata_path, err=str(e), logs={})
         sys.exit(1)
 
-def compile(spec: spec.CompileAirflowSpec) -> bytes:
+def compile(spec: spec.CompileAirflowSpec) -> str:
     """
     Takes a CompileAirflowSpec and generates an Airflow DAG specification Python file.
     It returns the DAG file.
@@ -72,14 +73,4 @@ def compile(spec: spec.CompileAirflowSpec) -> bytes:
         task_to_alias=task_to_alias,
     )
 
-    with open('dag.py', "w") as f:
-        f.write(r)
-
-    print("Type is: ", type(r))
-
-    r_bytes = str.encode(r)
-
-    print("Type is: ", type(r_bytes))
-
-
-    return r_bytes
+    return r
