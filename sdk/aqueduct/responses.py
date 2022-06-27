@@ -88,9 +88,12 @@ class RegisterWorkflowResponse(BaseModel):
     Attributes:
         id:
             The uuid if of the newly registered workflow.
+        payload:
+            Optional payload depending on the workflow engine.
     """
 
     id: uuid.UUID
+    payload: str
 
 
 class ListWorkflowResponseEntry(BaseModel):
