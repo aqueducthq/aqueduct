@@ -17,6 +17,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -41,6 +42,8 @@ func RegisterWorkflow(
 ) ([]byte, error) {
 	dagId := generateDagId(dag.Metadata.Name, dag.WorkflowId)
 
+	log.Infof("Dag ID: %v", dagId)
+
 	operatorToTask := make(map[uuid.UUID]string, len(dag.Operators))
 
 	// Generate storage path prefixes for operator metadata, artifact content,
@@ -53,6 +56,7 @@ func RegisterWorkflow(
 	artifactToMetadataPathPrefix := storagePathPrefixes.ArtifactMetadataPaths
 
 	taskToJobSpec := make(map[string]job.Spec, len(dag.Operators))
+	taskIds := make([]string, 0, len(dag.Operators))
 	// Generate job spec for each Airflow task
 	for _, op := range dag.Operators {
 		inputArtifactSpecs := make([]artifact.Spec, 0, len(op.Inputs))
@@ -102,6 +106,7 @@ func RegisterWorkflow(
 		}
 
 		taskId := generateTaskId(op.Name, op.Id)
+		taskIds = append(taskIds, taskId)
 
 		operatorToTask[op.Id] = taskId
 		taskToJobSpec[taskId] = jobSpec
@@ -122,8 +127,12 @@ func RegisterWorkflow(
 		operatorOutputPath,
 		dagId,
 		taskToJobSpec,
-		nil,
+		map[string]string{
+			taskIds[0]: taskIds[1],
+		},
 	)
+
+	log.Infof("Job Spec: %v", jobSpec)
 
 	if err := jobManager.Launch(ctx, jobSpec.Name(), jobSpec); err != nil {
 		return nil, err

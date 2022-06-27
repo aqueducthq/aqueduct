@@ -174,10 +174,10 @@ type DiscoverSpec struct {
 
 type CompileAirflowSpec struct {
 	basePythonSpec
-	OutputContentPath string
-	DagId             string
-	TaskSpecs         map[string]Spec
-	Edges             map[string]string
+	OutputContentPath string            `json:"output_content_path"  yaml:"output_content_path"`
+	DagId             string            `json:"dag_id"  yaml:"dag_id"`
+	TaskSpecs         map[string]Spec   `json:"task_specs"  yaml:"task_specs"`
+	TaskEdges         map[string]string `json:"task_edges"  yaml:"task_edges"`
 }
 
 func (*WorkflowRetentionSpec) Type() JobType {
@@ -529,7 +529,7 @@ func NewCompileAirflowSpec(
 		OutputContentPath: outputContentPath,
 		DagId:             dagId,
 		TaskSpecs:         taskSpecs,
-		Edges:             edges,
+		TaskEdges:         edges,
 	}
 }
 
