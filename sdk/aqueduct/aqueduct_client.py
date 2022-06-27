@@ -335,7 +335,17 @@ class Client:
         if self._in_notebook_or_console_context:
             _show_dag(self._api_client, dag)
 
-        flow_id = self._api_client.register_workflow(dag).id
+        resp = self._api_client.register_workflow(dag)
+        flow_id = resp.id
+
+        if resp.payload:
+            # Download payload to file
+            file = "{}_airflow.py".format(flow_id)
+            with open(file, "w") as f:
+                f.write(resp.payload)
+            
+            print("The Airflow DAG file has been downloaded to: {}. Please copy it to your Airflow server to begin execution.".format(file))
+
         return Flow(
             self._api_client,
             str(flow_id),
