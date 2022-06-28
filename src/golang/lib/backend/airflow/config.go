@@ -12,7 +12,7 @@ type config struct {
 	Password string `json:"password"  yaml:"password"`
 }
 
-// parseConfig takes in an auth.Config and parses into a config struct.
+// parseConfig takes in an auth.Config and parses into a config.
 // It also returns an error, if any.
 func parseConfig(conf auth.Config) (*config, error) {
 	data, err := conf.Marshal()
