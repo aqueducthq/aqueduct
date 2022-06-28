@@ -1,0 +1,127 @@
+name: Regression Test
+
+on:
+  push:
+    branches: [ eng-1240-create-regression-tests-for-package ]
+    paths:
+      - 'src/golang/**'
+      - 'src/python/**'
+      - 'integration_tests/**'
+      - 'sdk/aqueduct/**'
+      - '.github/workflows/regression-tests.yml'
+      - "sdk/examples/churn_prediction/Build and Deploy Churn Ensemble.ipynb"
+      - "sdk/examples/sentiment_analysis/Sentiment Model.ipynb"
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: ${{ github.event_name != 'issue_comment' || needs.check-comment-trigger.outputs.is-comment-triggered == 'true' }}
+    strategy:
+      matrix:
+        # These are all the Python versions that we want to regression test with.
+        python-version: ['3.8']
+
+    name: Run Regressions Tests with Python Version ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Create the logs directory
+        run: mkdir -p logs
+
+      - name: Set filename for the server's output logs
+        run: echo "SERVER_LOGS_FILE=logs/server_logs_${{ matrix.python-version }}" >> $GITHUB_ENV
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up GOPATH variable
+        run: echo "GOPATH=$(echo $HOME)" >> $GITHUB_ENV
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16.3
+      
+      - name: Install aqueduct-ml
+        run: pip3 install aqueduct-ml
+      
+      - name: Install Packages needed by the notebooks
+        run: pip3 install sklearn transformers torch
+
+      - name: Start the server
+        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
+
+      - name: Wait for server
+        timeout-minutes: 1
+        run: while ! echo exit | nc localhost 8080; do sleep 1; done
+
+      - name: Fetch the API key
+        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
+
+      # Grabs the pid of the process bound to port 8080 and kills it.
+      - name: Kill the server
+        run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
+
+      - name: do a pull
+        run: git pull
+      
+      - name: switch to main
+        run: git checkout main
+      
+      - name: Find previous release tag name
+        run: echo "PREV_TAG=$(git tag --sort=-v:refname | head -n 1)" >> $GITHUB_ENV
+      
+      - name: Fetch the previous release commit
+        run: echo "PREV_COMMIT=$(git rev-parse $PREV_TAG^{})" >> $GITHUB_ENV
+
+      - name: Switch to previous release branch
+        run: git checkout $PREV_COMMIT
+      
+      - name: Start the server
+        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
+
+      - name: Wait for server
+        timeout-minutes: 1
+        run: while ! echo exit | nc localhost 8080; do sleep 1; done
+
+      - name: Run Sentiment Notebook
+        working-directory: sdk/examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
+
+      # Grabs the pid of the process bound to port 8080 and kills it.
+      - name: Kill the server
+        run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
+
+      - name: switch to main
+        run: git checkout main
+      
+      - name: Update aqueduct with current version release
+        run: python3 scripts/install_local.py
+      
+      - name: Start the server
+        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
+
+      - name: Wait for server
+        timeout-minutes: 1
+        run: while ! echo exit | nc localhost 8080; do sleep 1; done
+
+      - name: Run Sentiment Notebook
+        working-directory: sdk/examples
+        timeout-minutes: 10
+        run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: Server Logs
+          path: logs/
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: Executor Logs
+          path: ~/.aqueduct/server/logs/*
