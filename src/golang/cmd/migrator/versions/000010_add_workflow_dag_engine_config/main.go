@@ -1,4 +1,4 @@
-package _000010_add_workflow_dag_runtime_config
+package _000010_add_workflow_dag_engine_config
 
 import (
 	"context"
