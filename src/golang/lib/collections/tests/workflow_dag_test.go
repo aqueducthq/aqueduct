@@ -37,8 +37,8 @@ func seedWorkflowDagWithWorkflows(t *testing.T, count int, workflowIds []uuid.UU
 					Bucket: "bucket-test",
 				},
 			},
-			&shared.RuntimeConfig{
-				Type:           shared.AqueductRuntimeType,
+			&shared.EngineConfig{
+				Type:           shared.AqueductEngineType,
 				AqueductConfig: &shared.AqueductConfig{},
 			},
 			db,
@@ -91,8 +91,8 @@ func TestCreateWorkflowDag(t *testing.T) {
 				Bucket: "bucket-test",
 			},
 		},
-		RuntimeConfig: shared.RuntimeConfig{
-			Type:           shared.AqueductRuntimeType,
+		EngineConfig: shared.EngineConfig{
+			Type:           shared.AqueductEngineType,
 			AqueductConfig: &shared.AqueductConfig{},
 		},
 	}
@@ -101,7 +101,7 @@ func TestCreateWorkflowDag(t *testing.T) {
 		context.Background(),
 		expectedWorkflowDag.WorkflowId,
 		&expectedWorkflowDag.StorageConfig,
-		&expectedWorkflowDag.RuntimeConfig,
+		&expectedWorkflowDag.EngineConfig,
 		db,
 	)
 	require.Nil(t, err)

@@ -127,7 +127,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 	}
 	isUpdate := collidingWorkflow != nil
 	if isUpdate {
-		if dagSummary.Dag.RuntimeConfig.Type == shared.AirflowRuntimeType {
+		if dagSummary.Dag.EngineConfig.Type == shared.AirflowEngineType {
 			return nil, http.StatusBadRequest, errors.New("Updating an Airflow workflow is currently not supported.")
 		}
 
@@ -213,8 +213,8 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	} else {
 		// Create relevant execution object depending on the runtime, i.e. cron job for Aqueduct
 		// or DAG Python file for Airflow
-		switch args.workflowDag.RuntimeConfig.Type {
-		case shared.AirflowRuntimeType:
+		switch args.workflowDag.EngineConfig.Type {
+		case shared.AirflowEngineType:
 			dagFile, err := createWorkflowAirflowDag(
 				ctx,
 				args.workflowDag,
@@ -231,7 +231,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			log.Infof(string(dagFile))
 			// TODO: Save dag file to response object
 			resp.Payload = string(dagFile)
-		case shared.AqueductRuntimeType:
+		case shared.AqueductEngineType:
 			if string(args.workflowDag.Metadata.Schedule.CronSchedule) != "" {
 				// Only create a workflow cron job if its trigger is periodic
 				if err := CreateWorkflowCronJob(
@@ -246,7 +246,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 				}
 			}
 		default:
-			return emptyResp, http.StatusBadRequest, errors.Newf("Unable to create workflow with unknown backend %v", args.workflowDag.RuntimeConfig.Type)
+			return emptyResp, http.StatusBadRequest, errors.Newf("Unable to create workflow with unknown backend %v", args.workflowDag.EngineConfig.Type)
 		}
 	}
 
@@ -254,7 +254,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	if args.workflowDag.RuntimeConfig.Type != shared.AirflowRuntimeType {
+	if args.workflowDag.EngineConfig.Type != shared.AirflowEngineType {
 		// Airflow workflows cannot be triggered yet, since the user must register the DAG
 		_, _, err = (&RefreshWorkflowHandler{
 			Database:       h.Database,
