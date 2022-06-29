@@ -25,7 +25,7 @@ func (w *standardWriterImpl) CreateWorkflowDag(
 	runtimeConfig *shared.EngineConfig,
 	db database.Database,
 ) (*WorkflowDag, error) {
-	insertColumns := []string{WorkflowIdColumn, CreatedAtColumn, StorageConfigColumn, RuntimeConfigColumn}
+	insertColumns := []string{WorkflowIdColumn, CreatedAtColumn, StorageConfigColumn, EngineConfigColumn}
 	insertWorkflowDagStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
 	args := []interface{}{workflowId, time.Now(), storageConfig, runtimeConfig}

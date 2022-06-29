@@ -177,7 +177,7 @@ func RegisterWorkflow(
 		ctx,
 		dag.Id,
 		map[string]interface{}{
-			workflow_dag.RuntimeConfigColumn: &newRuntimeConfig,
+			workflow_dag.EngineConfigColumn: &newRuntimeConfig,
 		},
 		db,
 	)

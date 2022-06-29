@@ -33,7 +33,7 @@ func (w *sqliteWriterImpl) CreateWorkflowDag(
 	runtimeConfig *shared.EngineConfig,
 	db database.Database,
 ) (*WorkflowDag, error) {
-	insertColumns := []string{IdColumn, WorkflowIdColumn, CreatedAtColumn, StorageConfigColumn, RuntimeConfigColumn}
+	insertColumns := []string{IdColumn, WorkflowIdColumn, CreatedAtColumn, StorageConfigColumn, EngineConfigColumn}
 	insertWorkflowDagStmt := db.PrepareInsertWithReturnAllStmt(tableName, insertColumns, allColumns())
 
 	id, err := utils.GenerateUniqueUUID(ctx, tableName, db)
