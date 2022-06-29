@@ -73,7 +73,7 @@ func syncWorkflowDag(
 	userReader user.Reader,
 	db database.Database,
 ) error {
-	authConf, err := auth.ReadConfigFromSecret(ctx, dag.RuntimeConfig.AirflowConfig.IntegrationId, nil)
+	authConf, err := auth.ReadConfigFromSecret(ctx, dag.EngineConfig.AirflowConfig.IntegrationId, nil)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func syncWorkflowDag(
 		return err
 	}
 
-	dagRunsResp, resp, err := cli.apiClient.DAGRunApi.GetDagRuns(cli.ctx, dag.RuntimeConfig.AirflowConfig.DagId).Execute()
+	dagRunsResp, resp, err := cli.apiClient.DAGRunApi.GetDagRuns(cli.ctx, dag.EngineConfig.AirflowConfig.DagId).Execute()
 	if err != nil {
 		return wrapApiError(err, "GetDagRuns", resp)
 	}
@@ -140,7 +140,7 @@ func syncWorkflowDagResult(
 ) error {
 	taskIdToInstance, err := getDagRunTaskInstances(
 		cli,
-		dag.RuntimeConfig.AirflowConfig.DagId,
+		dag.EngineConfig.AirflowConfig.DagId,
 		*run.DagRunId.Get(),
 	)
 	if err != nil {
@@ -258,7 +258,7 @@ func createOperatorResult(
 	artifactResultWriter artifact_result.Writer,
 	db database.Database,
 ) error {
-	taskId, ok := dag.RuntimeConfig.AirflowConfig.OperatorToTask[op.Id]
+	taskId, ok := dag.EngineConfig.AirflowConfig.OperatorToTask[op.Id]
 	if !ok {
 		return errors.Newf("Unable to find Airflow task ID for operator %v", op.Id)
 	}
@@ -346,7 +346,7 @@ func createArtifactResult(
 		return nil, errors.Newf("Unable to find artifact %v", artifactId)
 	}
 
-	contentPath, ok := dag.RuntimeConfig.AirflowConfig.ArtifactContentPathPrefix[artifact.Id]
+	contentPath, ok := dag.EngineConfig.AirflowConfig.ArtifactContentPathPrefix[artifact.Id]
 	if !ok {
 		return nil, errors.Newf("Unable to find content path for artifact %v", artifact.Id)
 	}
@@ -368,7 +368,7 @@ func updateOperatorResultStatus(
 	operatorResultWriter operator_result.Writer,
 	db database.Database,
 ) (shared.ExecutionStatus, error) {
-	operatorMetadataPath, ok := dag.RuntimeConfig.AirflowConfig.OperatorMetadataPathPrefix[operatorResult.OperatorId]
+	operatorMetadataPath, ok := dag.EngineConfig.AirflowConfig.OperatorMetadataPathPrefix[operatorResult.OperatorId]
 	if !ok {
 		return shared.FailedExecutionStatus, errors.Newf("Unable to find metadata path for operator %v", operatorResult.OperatorId)
 	}
@@ -414,7 +414,7 @@ func updateArtifactResult(
 	artifactResultWriter artifact_result.Writer,
 	db database.Database,
 ) error {
-	artifactMetadataPath, ok := dag.RuntimeConfig.AirflowConfig.ArtifactMetadataPathPrefix[artifactResult.ArtifactId]
+	artifactMetadataPath, ok := dag.EngineConfig.AirflowConfig.ArtifactMetadataPathPrefix[artifactResult.ArtifactId]
 	if !ok {
 		return errors.Newf("Unable to find metadata path for artifact %v", artifactResult.ArtifactId)
 	}
