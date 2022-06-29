@@ -10,8 +10,8 @@ from .api_client import APIClient
 from .artifact import ArtifactSpec, Artifact
 from .dag import (
     DAG,
-    AirflowRuntimeConfig,
-    RuntimeConfig,
+    AirflowEngineConfig,
+    EngineConfig,
     apply_deltas_to_dag,
     SubgraphDAGDelta,
     Metadata,
@@ -27,7 +27,7 @@ from .flow import Flow
 from .flow_run import _show_dag
 from .github import Github
 from .integrations.integration import IntegrationInfo
-from .integrations.airflow import AirflowIntegration
+from .integrations.airflow_integration import AirflowIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
@@ -92,7 +92,7 @@ class Client:
         self._connected_integrations: Dict[
             str, IntegrationInfo
         ] = self._api_client.list_integrations()
-        self._dag = DAG(metadata=Metadata(), runtime_config=RuntimeConfig())
+        self._dag = DAG(metadata=Metadata(), engine_config=EngineConfig())
 
         # Will show graph if in an ipynb or Python console, but not if running a Python script.
         self._in_notebook_or_console_context = (not hasattr(main, "__file__")) and (
@@ -282,7 +282,7 @@ class Client:
         schedule: str = "",
         k_latest_runs: int = -1,
         artifacts: Optional[List[GenericArtifact]] = None,
-        airflow_backend: AirflowIntegration = None, 
+        engine: AirflowIntegration = None, 
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -307,9 +307,9 @@ class Client:
                 All the artifacts that you care about computing. These artifacts are guaranteed
                 to be computed. Additional artifacts may also be included as intermediate
                 computation steps. All checks are on the resulting flow are also included.
-            airflow_backend:
-                If an AirflowIntegration is provided, the corresponding Airflow server will be
-                used as the workflow's backend. Otherwise, the Aqueduct server is used.
+            engine:
+                An optional integration that specifies the workflow engine. It defaults to
+                the Aqueduct engine.
         Raises:
             InvalidCronStringException:
                 An error occurred because the supplied schedule is invalid.
@@ -345,16 +345,16 @@ class Client:
             retention_policy=retention_policy,
         )
         
-        # Set the workflow runtime
-        if airflow_backend:
-            dag.runtime_config = RuntimeConfig(
+        # Set the workflow engine
+        if engine:
+            dag.engine_config = EngineConfig(
                 type=RuntimeType.AIRFLOW,
-                airflow_config=AirflowRuntimeConfig(
-                    integration_id=airflow_backend._metadata.id,
+                airflow_config=AirflowEngineConfig(
+                    integration_id=engine._metadata.id,
                 )
             )
         else:
-            dag.runtime_config = RuntimeConfig(
+            dag.engine_config = EngineConfig(
                 type=RuntimeType.AQUEDUCT,
             )
 

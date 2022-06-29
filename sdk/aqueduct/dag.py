@@ -35,17 +35,17 @@ class Metadata(BaseModel):
     retention_policy: Optional[RetentionPolicy]
 
 
-class AqueductRuntimeConfig(BaseModel):
+class AqueductEngineConfig(BaseModel):
     pass
 
 
-class AirflowRuntimeConfig(BaseModel):
+class AirflowEngineConfig(BaseModel):
     integration_id: uuid.UUID
 
-class RuntimeConfig(BaseModel):
+class EngineConfig(BaseModel):
     type: RuntimeType = RuntimeType.AQUEDUCT
-    aqueduct_config: Optional[AqueductRuntimeConfig]
-    airflow_config: Optional[AirflowRuntimeConfig]
+    aqueduct_config: Optional[AqueductEngineConfig]
+    airflow_config: Optional[AirflowEngineConfig]
 
 class DAG(BaseModel):
     operators: Dict[str, Operator] = {}
@@ -58,7 +58,7 @@ class DAG(BaseModel):
     # These fields must be set when publishing the workflow
     metadata: Metadata
 
-    runtime_config: RuntimeConfig
+    engine_config: EngineConfig
 
     class Config:
         fields = {
