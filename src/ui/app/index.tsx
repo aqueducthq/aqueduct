@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Link, Navigate, useLocation } from "react-router-dom";
-import { Thing } from '../.';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HomePage, DataPage, IntegrationsPage, IntegrationDetailsPage, WorkflowPage, WorkflowsPage, LoginPage, AccountPage } from '@aqueducthq/common';
 import { store } from './stores/store';
 import { Provider } from 'react-redux';

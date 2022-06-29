@@ -101,7 +101,7 @@ def _import_invoke_method(spec: spec.FunctionSpec) -> Callable[..., DataFrame]:
 
 def _execute_function(
     spec: spec.FunctionSpec,
-    inputs: List[utils.InputArtifact],
+    inputs: List[Any],
 ) -> Tuple[Any, Dict[str, str], str, Dict[str, str]]:
     """
     Invokes the given function on the input data. Does not raise an exception on any
@@ -139,7 +139,7 @@ def _execute_function(
             None,
             _fetch_logs(stdout_log, stderr_log),
             str(type(e).__name__) + ": " + str(e),
-            None,
+            {},
         )
     finally:
         sys.path.pop(0)
@@ -176,11 +176,11 @@ def run(spec: spec.FunctionSpec) -> None:
 
         utils.write_artifacts(
             storage,
+            spec.output_artifact_types,
             spec.output_content_paths,
             spec.output_metadata_paths,
             results,
-            system_metadata,
-            spec.output_artifact_types,
+            system_metadata=system_metadata,
         )
 
         utils.write_operator_metadata(storage, spec.metadata_path, "", logs)

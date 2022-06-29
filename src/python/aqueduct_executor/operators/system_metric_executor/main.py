@@ -14,14 +14,17 @@ def run(spec: spec.SystemMetricSpec) -> None:
     """
     storage = parse_storage(spec.storage_config)
     try:
+        # We currently allow the spec to contain multiple input_metadata paths.
+        # A system metric currently spans over a single operator.
+        # The scheduler enforces this requirement before the executor is run.
         system_metadata = utils.read_system_metadata(storage, spec.input_metadata_paths)
         utils.write_artifact(
             storage,
+            enums.OutputArtifactType.FLOAT,
             spec.output_content_path,
             spec.output_metadata_path,
-            float(system_metadata[0][utils._METADATA_SYSTEM_METADATA_NAME][spec.metric_name]),
-            {},
-            enums.OutputArtifactType.FLOAT,
+            float(system_metadata[0][spec.metric_name]),
+            system_metadata={},
         )
 
         utils.write_operator_metadata(storage, spec.metadata_path, "", {})

@@ -109,6 +109,12 @@ jobs:
           name: Server Logs
           path: logs/
 
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: Executor Logs
+          path: ~/.aqueduct/server/logs/*
+
       - name: Report to Slack on Failure
         if: always()
         uses: ravsamhq/notify-slack-action@v1

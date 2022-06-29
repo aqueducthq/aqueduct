@@ -130,11 +130,16 @@ type SystemMetricSpec struct {
 
 type ExtractSpec struct {
 	basePythonSpec
-	ConnectorName      integration.Service     `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig    auth.Config             `json:"connector_config"  yaml:"connector_config"`
-	Parameters         connector.ExtractParams `json:"parameters"  yaml:"parameters"`
-	OutputContentPath  string                  `json:"output_content_path"  yaml:"output_content_path"`
-	OutputMetadataPath string                  `json:"output_metadata_path"  yaml:"output_metadata_path"`
+	ConnectorName   integration.Service     `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig auth.Config             `json:"connector_config"  yaml:"connector_config"`
+	Parameters      connector.ExtractParams `json:"parameters"  yaml:"parameters"`
+
+	// These input fields are only used to record user-defined parameters for relational queries.
+	InputParamNames    []string `json:"input_param_names" yaml:"input_param_names"`
+	InputContentPaths  []string `json:"input_content_paths" yaml:"input_content_paths"`
+	InputMetadataPaths []string `json:"input_metadata_paths" yaml:"input_metadata_paths"`
+	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
+	OutputMetadataPath string   `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
 type LoadSpec struct {
@@ -382,6 +387,9 @@ func NewExtractSpec(
 	connectorName integration.Service,
 	connectorConfig auth.Config,
 	parameters connector.ExtractParams,
+	inputParamNames []string,
+	inputContentPaths []string,
+	inputMetadataPaths []string,
 	outputContentPath string,
 	outputMetadataPath string,
 ) Spec {
@@ -394,6 +402,9 @@ func NewExtractSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
+		InputParamNames:    inputParamNames,
+		InputContentPaths:  inputContentPaths,
+		InputMetadataPaths: inputMetadataPaths,
 		ConnectorName:      connectorName,
 		ConnectorConfig:    connectorConfig,
 		Parameters:         parameters,

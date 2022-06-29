@@ -28,6 +28,7 @@ class BigQueryConnector(connector.TabularConnector):
         return all_tables
 
     def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
+        assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
         query = self.client.query(params.query)
         df = query.result().to_dataframe()
         return df

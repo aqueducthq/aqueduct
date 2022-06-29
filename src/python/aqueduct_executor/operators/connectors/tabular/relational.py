@@ -1,17 +1,10 @@
 from typing import List
 
 import pandas as pd
-import re
-from datetime import date
 from sqlalchemy import engine, inspect
 from sqlalchemy.exc import SQLAlchemyError
 
 from aqueduct_executor.operators.connectors.tabular import connector, extract, load
-
-# Regular Expression that matches any substring apperance with
-# "{{ }}" and a word inside with optional space in front or after
-# Potential Matches: "{{today}}", "{{ today  }}""
-TAG_PATTERN = r"{{[\s+]*\w+[\s+]*}}"
 
 
 class RelationalConnector(connector.TabularConnector):
@@ -31,16 +24,8 @@ class RelationalConnector(connector.TabularConnector):
         return inspect(self.engine).get_table_names()
 
     def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
-        query = params.query
-        matches = re.findall(TAG_PATTERN, query)
-        for match in matches:
-            tag = match.strip(" " "{}")
-            if tag == "today":
-                today_python = date.today()
-                today_sql = "'" + today_python.strftime("%Y-%m-%d") + "'"
-                query = query.replace("{{today}}", today_sql)
-        df = pd.read_sql(query, con=self.engine)
-        return df
+        assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
+        return pd.read_sql(params.query, con=self.engine)
 
     def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
         # NOTE (saurav): df._to_sql has known performance issues. Using `method="multi"` helps incrementally,

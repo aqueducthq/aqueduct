@@ -173,3 +173,26 @@ def test_trigger_flow_with_different_param(client):
         _check_param_vals(flow.latest()._dag, [5, 10])
     finally:
         client.delete_flow(flow.id())
+
+
+@pytest.mark.publish
+def test_trigger_flow_with_different_sql_param(client):
+    db = client.integration(name=get_integration_name())
+
+    _ = client.create_param("table_name", default="hotel_reviews")
+    sql_artifact = db.sql(query="select * from {{ table_name}}")
+
+    flow_name = generate_new_flow_name()
+    flow = run_flow_test(client, artifacts=[sql_artifact], name=flow_name, delete_flow_after=False)
+
+    try:
+        client.trigger(flow.id(), parameters={"table_name": "customer_activity"})
+        assert wait_for_flow_runs(client, flow.id(), num_runs=2) == 2
+
+        # Verify the parameters were configured as expected.
+        flow_runs = flow.list_runs()
+        assert len(flow_runs) == 2
+        _check_param_vals(flow.fetch(flow_runs[1]["run_id"])._dag, expected_vals=["hotel_reviews"])
+        _check_param_vals(flow.latest()._dag, expected_vals=["customer_activity"])
+    finally:
+        client.delete_flow(flow.id())

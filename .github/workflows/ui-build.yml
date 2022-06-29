@@ -1,0 +1,41 @@
+name: UI Build
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/ui/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: Install @aqueducthq/common dependencies and build @aqueducthq/common
+        working-directory: ./src/ui/common
+        run: npm install
+
+      - name: Lint @aqueducthq/common
+        working-directory: ./src/ui/common
+        run: npm run lint
+
+      - name: Link @aqueducthq/common
+        working-directory: ./src/ui/common
+        run: npm link
+
+      - name: Install OSS app dependencies
+        working-directory: ./src/ui/app
+        run: npm link @aqueducthq/common
+
+      - name: Format check OSS app
+        working-directory: ./src/ui/app
+        run: npm run lint
+
+      - name: Build OSS app
+        working-directory: ./src/ui/app
+        run: npm run build

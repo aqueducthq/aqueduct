@@ -44,9 +44,10 @@ if __name__ == "__main__":
         help="Whether to build and replace UI files.",
     )
     args = parser.parse_args()
-    print("Current directory should be the root directory of the aqueduct repo.")
+
     cwd = os.getcwd()
     if not cwd.endswith("aqueduct"):
+        print("Current directory should be the root directory of the aqueduct repo.")
         print("Your working directory is %s" % cwd)
         exit(1)
 

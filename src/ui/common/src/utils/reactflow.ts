@@ -10,7 +10,7 @@ import {
   OperatorTypeToNodeTypeMap,
 } from '../reducers/nodeSelection';
 import { Artifact } from './artifacts';
-import { Operator } from './operators';
+import { Operator, OperatorType } from './operators';
 
 const { apiAddress } = useAqueductConsts();
 
@@ -129,9 +129,13 @@ export const getDagLayoutElements = async (
   apiKey: string
 ): Promise<{ nodes: Node<ReactFlowNodeData>[]; edges: Edge[] }> => {
   const [opPositions, artfPositions] = await getPositions(operators, apiKey);
-  const opNodes = Object.values(operators).map((op) =>
-    getOperatorNode(op, opPositions[op.id], onChange, onConnect)
-  );
+
+  // Do not display any parameter operators, only the artifacts.
+  const opNodes = Object.values(operators)
+    .filter((op) => {
+      return op.spec.type != OperatorType.Param;
+    })
+    .map((op) => getOperatorNode(op, opPositions[op.id], onChange, onConnect));
   const artfNodes = Object.values(artifacts).map((artf) =>
     getArtifactNode(artf, artfPositions[artf.id], onChange, onConnect)
   );

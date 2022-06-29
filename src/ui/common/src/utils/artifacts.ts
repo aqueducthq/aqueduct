@@ -5,6 +5,7 @@ export enum ArtifactType {
   Table = 'table',
   Float = 'float',
   Bool = 'boolean',
+  Json = 'json',
 }
 
 export type Spec = {

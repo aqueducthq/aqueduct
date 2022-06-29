@@ -26,7 +26,7 @@ var (
 
 // ScheduleOperator executes an operator based on its spec.
 // Inputs:
-//	spec: the operator spec consisting its type, and more metadata based on the type
+//	op: the operator to execute
 //	inputs: a list of input artifacts
 //	outputs: a list of output artifacts
 //	artifactPaths: a pre-generated map of `artifactId -> storage paths`. It must cover all artifacts in the workflow
@@ -49,9 +49,9 @@ var (
 //
 func ScheduleOperator(
 	ctx context.Context,
-	opSpec operator.Spec,
-	inputArtifactSpecs []artifact.Spec,
-	outputArtifactSpecs []artifact.Spec,
+	op operator.Operator,
+	inputArtifacts []artifact.Artifact,
+	outputArtifacts []artifact.Artifact,
 	metadataPath string,
 	inputContentPaths []string,
 	inputMetadataPaths []string,
@@ -63,9 +63,9 @@ func ScheduleOperator(
 ) (string, error) {
 	jobSpec, err := GenerateOperatorJobSpec(
 		ctx,
-		opSpec,
-		inputArtifactSpecs,
-		outputArtifactSpecs,
+		op,
+		inputArtifacts,
+		outputArtifacts,
 		metadataPath,
 		inputContentPaths,
 		inputMetadataPaths,
@@ -80,7 +80,7 @@ func ScheduleOperator(
 	}
 
 	if err := jobManager.Launch(ctx, jobSpec.Name(), jobSpec); err != nil {
-		return "", errors.Wrapf(err, "unable to schedule %v", opSpec.Type())
+		return "", errors.Wrapf(err, "unable to schedule %v", op.Spec.Type())
 	}
 
 	return jobSpec.Name(), nil
@@ -91,9 +91,9 @@ func ScheduleOperator(
 // It returns a job.Spec and an error, if any.
 func GenerateOperatorJobSpec(
 	ctx context.Context,
-	opSpec operator.Spec,
-	inputArtifactSpecs []artifact.Spec,
-	outputArtifactSpecs []artifact.Spec,
+	op operator.Operator,
+	inputArtifacts []artifact.Artifact,
+	outputArtifacts []artifact.Artifact,
 	metadataPath string,
 	inputContentPaths []string,
 	inputMetadataPaths []string,
@@ -104,27 +104,27 @@ func GenerateOperatorJobSpec(
 	vaultObject vault.Vault,
 ) (job.Spec, error) {
 	// Append to this switch for newly supported operator types
-	if opSpec.IsFunction() {
+	if op.Spec.IsFunction() {
 		// A function operator takes any number of dataframes as input and outputs
 		// any number of dataframes.
-		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifactSpecs))
-		for _, inputArtifactSpec := range inputArtifactSpecs {
-			if inputArtifactSpec.Type() != artifact.TableType && inputArtifactSpec.Type() != artifact.JsonType {
+		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifacts))
+		for _, inputArtifact := range inputArtifacts {
+			if inputArtifact.Spec.Type() != artifact.TableType && inputArtifact.Spec.Type() != artifact.JsonType {
 				return nil, errors.New("Inputs to function operator must be Table or Parameter Artifacts.")
 			}
-			inputArtifactTypes = append(inputArtifactTypes, inputArtifactSpec.Type())
+			inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Spec.Type())
 		}
-		outputArtifactTypes := make([]artifact.Type, 0, len(outputArtifactSpecs))
-		for _, outputArtifactSpec := range outputArtifactSpecs {
-			if outputArtifactSpec.Type() != artifact.TableType {
+		outputArtifactTypes := make([]artifact.Type, 0, len(outputArtifacts))
+		for _, outputArtifact := range outputArtifacts {
+			if outputArtifact.Spec.Type() != artifact.TableType {
 				return nil, errors.New("Outputs of function operator must be Table Artifacts.")
 			}
-			outputArtifactTypes = append(outputArtifactTypes, outputArtifactSpec.Type())
+			outputArtifactTypes = append(outputArtifactTypes, outputArtifact.Spec.Type())
 		}
 
 		return GenerateFunctionJobSpec(
 			ctx,
-			*opSpec.Function(),
+			*op.Spec.Function(),
 			metadataPath,
 			inputContentPaths,
 			inputMetadataPaths,
@@ -137,25 +137,25 @@ func GenerateOperatorJobSpec(
 		), nil
 	}
 
-	if opSpec.IsMetric() {
-		if len(outputArtifactSpecs) != 1 {
+	if op.Spec.IsMetric() {
+		if len(outputArtifacts) != 1 {
 			return nil, ErrWrongNumOutputs
 		}
 
-		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifactSpecs))
-		for _, inputArtifactSpec := range inputArtifactSpecs {
-			if inputArtifactSpec.Type() != artifact.TableType &&
-				inputArtifactSpec.Type() != artifact.FloatType &&
-				inputArtifactSpec.Type() != artifact.JsonType {
+		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifacts))
+		for _, inputArtifact := range inputArtifacts {
+			if inputArtifact.Spec.Type() != artifact.TableType &&
+				inputArtifact.Spec.Type() != artifact.FloatType &&
+				inputArtifact.Spec.Type() != artifact.JsonType {
 				return nil, errors.New("Inputs to metric operator must be Table, Float, or Parameter Artifacts.")
 			}
-			inputArtifactTypes = append(inputArtifactTypes, inputArtifactSpec.Type())
+			inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Spec.Type())
 		}
 		outputArtifactTypes := []artifact.Type{artifact.FloatType}
 
 		return GenerateFunctionJobSpec(
 			ctx,
-			opSpec.Metric().Function,
+			op.Spec.Metric().Function,
 			metadataPath,
 			inputContentPaths,
 			inputMetadataPaths,
@@ -168,26 +168,26 @@ func GenerateOperatorJobSpec(
 		), nil
 	}
 
-	if opSpec.IsCheck() {
-		if len(outputArtifactSpecs) != 1 {
+	if op.Spec.IsCheck() {
+		if len(outputArtifacts) != 1 {
 			return nil, ErrWrongNumOutputs
 		}
 
 		// Checks can be computed on tables and metrics.
-		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifactSpecs))
-		for _, inputArtifactSpec := range inputArtifactSpecs {
-			if inputArtifactSpec.Type() != artifact.TableType &&
-				inputArtifactSpec.Type() != artifact.FloatType &&
-				inputArtifactSpec.Type() != artifact.JsonType {
+		inputArtifactTypes := make([]artifact.Type, 0, len(inputArtifacts))
+		for _, inputArtifact := range inputArtifacts {
+			if inputArtifact.Spec.Type() != artifact.TableType &&
+				inputArtifact.Spec.Type() != artifact.FloatType &&
+				inputArtifact.Spec.Type() != artifact.JsonType {
 				return nil, errors.New("Inputs to metric operator must be Table, Float, or Parameter Artifacts.")
 			}
-			inputArtifactTypes = append(inputArtifactTypes, inputArtifactSpec.Type())
+			inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Spec.Type())
 		}
 		outputArtifactTypes := []artifact.Type{artifact.BoolType}
 
 		return GenerateFunctionJobSpec(
 			ctx,
-			opSpec.Check().Function,
+			op.Spec.Check().Function,
 			metadataPath,
 			inputContentPaths,
 			inputMetadataPaths,
@@ -200,11 +200,19 @@ func GenerateOperatorJobSpec(
 		), nil
 	}
 
-	if opSpec.IsExtract() {
-		if len(inputArtifactSpecs) != 0 {
+	if op.Spec.IsExtract() {
+		inputParamNames := make([]string, 0, len(inputArtifacts))
+		for _, inputArtifact := range inputArtifacts {
+			if inputArtifact.Spec.Type() != artifact.JsonType {
+				return nil, errors.New("Only parameters can be used as inputs to extract operators.")
+			}
+			inputParamNames = append(inputParamNames, inputArtifact.Name)
+		}
+
+		if len(inputArtifacts) != 0 {
 			return nil, ErrWrongNumInputs
 		}
-		if len(outputArtifactSpecs) != 1 {
+		if len(outputArtifacts) != 1 {
 			return nil, ErrWrongNumOutputs
 		}
 		if len(outputContentPaths) != 1 {
@@ -216,8 +224,11 @@ func GenerateOperatorJobSpec(
 
 		return GenerateExtractJobSpec(
 			ctx,
-			*opSpec.Extract(),
+			*op.Spec.Extract(),
 			metadataPath,
+			inputParamNames,
+			inputContentPaths,
+			inputMetadataPaths,
 			outputContentPaths[0],
 			outputMetadataPaths[0],
 			storageConfig,
@@ -226,11 +237,11 @@ func GenerateOperatorJobSpec(
 		)
 	}
 
-	if opSpec.IsLoad() {
-		if len(inputArtifactSpecs) != 1 {
+	if op.Spec.IsLoad() {
+		if len(inputArtifacts) != 1 {
 			return nil, ErrWrongNumInputs
 		}
-		if len(outputArtifactSpecs) != 0 {
+		if len(outputArtifacts) != 0 {
 			return nil, ErrWrongNumOutputs
 		}
 		if len(inputContentPaths) != 1 {
@@ -241,7 +252,7 @@ func GenerateOperatorJobSpec(
 		}
 		return GenerateLoadJobSpec(
 			ctx,
-			*opSpec.Load(),
+			*op.Spec.Load(),
 			metadataPath,
 			inputContentPaths[0],
 			inputMetadataPaths[0],
@@ -251,14 +262,14 @@ func GenerateOperatorJobSpec(
 		)
 	}
 
-	if opSpec.IsParam() {
-		if len(inputArtifactSpecs) != 0 {
+	if op.Spec.IsParam() {
+		if len(inputArtifacts) != 0 {
 			return nil, ErrWrongNumInputs
 		}
-		if len(outputArtifactSpecs) != 1 {
+		if len(outputArtifacts) != 1 {
 			return nil, ErrWrongNumOutputs
 		}
-		if !outputArtifactSpecs[0].IsJson() {
+		if !outputArtifacts[0].Spec.IsJson() {
 			return nil, errors.Newf("Internal Error: parameter must output a JSON artifact.")
 		}
 		if len(outputContentPaths) != 1 {
@@ -270,7 +281,7 @@ func GenerateOperatorJobSpec(
 
 		return GenerateParamJobSpec(
 			ctx,
-			*opSpec.Param(),
+			*op.Spec.Param(),
 			metadataPath,
 			outputContentPaths[0],
 			outputMetadataPaths[0],
@@ -279,7 +290,7 @@ func GenerateOperatorJobSpec(
 		), nil
 	}
 
-	if opSpec.IsSystemMetric() {
+	if op.Spec.IsSystemMetric() {
 		if len(outputContentPaths) != 1 {
 			return nil, ErrWrongNumArtifactContentPaths
 		}
@@ -294,7 +305,7 @@ func GenerateOperatorJobSpec(
 
 		return GenerateSystemMetricJobSpec(
 			ctx,
-			*opSpec.SystemMetric(),
+			*op.Spec.SystemMetric(),
 			metadataPath,
 			inputMetadataPaths,
 			outputContentPaths[0],
@@ -305,7 +316,7 @@ func GenerateOperatorJobSpec(
 	}
 
 	// If we reach here, the operator opSpec type is not supported.
-	return nil, errors.Newf("Unsupported operator opSpec with type %s", opSpec.Type())
+	return nil, errors.Newf("Unsupported operator opSpec with type %s", op.Spec.Type())
 }
 
 type FailureType int64

@@ -78,7 +78,11 @@ const DataPreviewer: React.FC<Props> = ({ previewData, error }) => {
       const parsedData = JSON.parse(previewData.result.data);
       data = <DataTable data={parsedData} />;
     } else {
-      data = <p>{previewData.result.data}</p>;
+      data = (
+        <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
+          {previewData.result.data}
+        </Typography>
+      );
     }
   }
 

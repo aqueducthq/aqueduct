@@ -8,6 +8,7 @@ export enum OperatorType {
   Load = 'load',
   Metric = 'metric',
   Check = 'check',
+  Param = 'param',
 }
 
 export enum FunctionType {

@@ -485,6 +485,17 @@ class UpdateParametersDelta(DAGDelta):
                     % (param_name, get_operator_type(param_op))
                 )
 
+            # Any parameter that is consumed by a SQL operator must be a string type!
+            assert len(param_op.outputs) == 1
+            param_artifact_id = param_op.outputs[0]
+            ops_on_param = dag.list_operators(on_artifact_id=param_artifact_id)
+            if any(get_operator_type(op) == OperatorType.EXTRACT for op in ops_on_param):
+                if not isinstance(new_val, str):
+                    raise InvalidUserArgumentException(
+                        "Parameter %s is used by a sql query, so it must be a string type, not type %s."
+                        % (param_name, type(new_val).__name__)
+                    )
+
             # Update the parameter value and update the dag.
             assert param_op.spec.param  # for mypy
             param_op.spec.param.val = serialize_parameter_value(

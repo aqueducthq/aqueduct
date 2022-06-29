@@ -191,7 +191,7 @@ func scheduleOperators(
 			return operatorExecutionError(operators, id)
 		}
 
-		inputArtifactSpecs := make([]artifact.Spec, 0, len(op.Inputs))
+		inputArtifacts := make([]artifact.Artifact, 0, len(op.Inputs))
 		inputContentPaths := make([]string, 0, len(op.Inputs))
 		inputMetadataPaths := make([]string, 0, len(op.Inputs))
 		for _, inputArtifactId := range op.Inputs {
@@ -200,12 +200,12 @@ func scheduleOperators(
 				return errors.Newf("Cannot find artifact with ID %v", inputArtifactId)
 			}
 
-			inputArtifactSpecs = append(inputArtifactSpecs, inputArtifact.Spec)
+			inputArtifacts = append(inputArtifacts, inputArtifact)
 			inputContentPaths = append(inputContentPaths, artifactContentPaths[inputArtifact.Id])
 			inputMetadataPaths = append(inputMetadataPaths, artifactMetadataPaths[inputArtifact.Id])
 		}
 
-		outputArtifactSpecs := make([]artifact.Spec, 0, len(op.Outputs))
+		outputArtifacts := make([]artifact.Artifact, 0, len(op.Outputs))
 		outputContentPaths := make([]string, 0, len(op.Outputs))
 		outputMetadataPaths := make([]string, 0, len(op.Outputs))
 		for _, outputArtifactId := range op.Outputs {
@@ -214,16 +214,16 @@ func scheduleOperators(
 				return errors.Newf("Cannot find artifact with ID %v", outputArtifactId)
 			}
 
-			outputArtifactSpecs = append(outputArtifactSpecs, outputArtifact.Spec)
+			outputArtifacts = append(outputArtifacts, outputArtifact)
 			outputContentPaths = append(outputContentPaths, artifactContentPaths[outputArtifact.Id])
 			outputMetadataPaths = append(outputMetadataPaths, artifactMetadataPaths[outputArtifact.Id])
 		}
 
 		jobId, err := scheduler.ScheduleOperator(
 			ctx,
-			op.Spec,
-			inputArtifactSpecs,
-			outputArtifactSpecs,
+			op,
+			inputArtifacts,
+			outputArtifacts,
 			operatorMetadataPath,
 			inputContentPaths,
 			inputMetadataPaths,

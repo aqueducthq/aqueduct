@@ -20,6 +20,9 @@ func GenerateExtractJobSpec(
 	ctx context.Context,
 	spec connector.Extract,
 	metadataPath string,
+	inputParamNames []string,
+	inputContentPaths []string,
+	inputMetadataPaths []string,
 	outputContentPath string,
 	outputMetadataPath string,
 	storageConfig *shared.StorageConfig,
@@ -32,7 +35,6 @@ func GenerateExtractJobSpec(
 	}
 
 	jobName := generateExtractJobName()
-
 	jobSpec := job.NewExtractSpec(
 		jobName,
 		storageConfig,
@@ -40,6 +42,9 @@ func GenerateExtractJobSpec(
 		spec.Service,
 		config,
 		spec.Parameters,
+		inputParamNames,
+		inputContentPaths,
+		inputMetadataPaths,
 		outputContentPath,
 		outputMetadataPath,
 	)

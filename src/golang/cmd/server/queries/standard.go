@@ -99,6 +99,32 @@ func (r *standardReaderImpl) GetArtifactResultsByArtifactIds(
 	return response, err
 }
 
+func (r *standardReaderImpl) GetCheckResultsByArtifactIds(
+	ctx context.Context,
+	artifactIds []uuid.UUID,
+	db database.Database,
+) ([]ArtifactCheckResponse, error) {
+	if len(artifactIds) == 0 {
+		return nil, errors.New("Provided empty IDs list.")
+	}
+
+	query := fmt.Sprintf(
+		`SELECT DISTINCT workflow_dag_edge.from_id AS artifact_id, operator.name AS name, operator_result.status, 
+		 operator_result.metadata, operator_result.workflow_dag_result_id 
+		 FROM workflow_dag_edge, operator, operator_result 
+		 WHERE workflow_dag_edge.to_id = operator.id AND operator.id = operator_result.operator_id AND 
+		 workflow_dag_edge.from_id IN (%s) AND operator.spec->>'type' = '%s';`,
+		stmt_preparers.GenerateArgsList(len(artifactIds), 1),
+		operator.CheckType,
+	)
+
+	args := stmt_preparers.CastIdsListToInterfaceList(artifactIds)
+
+	var response []ArtifactCheckResponse
+	err := db.Query(ctx, &response, query, args...)
+	return response, err
+}
+
 func (r *standardReaderImpl) GetOperatorResultsByArtifactIdsAndWorkflowDagResultIds(
 	ctx context.Context,
 	artifactIds, workflowDagResultIds []uuid.UUID,
