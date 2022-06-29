@@ -7,15 +7,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type RuntimeType string
+type EngineType string
 
 const (
-	AqueductRuntimeType RuntimeType = "aqueduct"
-	AirflowRuntimeType  RuntimeType = "airflow"
+	AqueductEngineType EngineType = "aqueduct"
+	AirflowEngineType  EngineType = "airflow"
 )
 
-type RuntimeConfig struct {
-	Type           RuntimeType     `yaml:"type" json:"type"`
+type EngineConfig struct {
+	Type           EngineType      `yaml:"type" json:"type"`
 	AqueductConfig *AqueductConfig `yaml:"aqueductConfig" json:"aqueduct_config,omitempty"`
 	AirflowConfig  *AirflowConfig  `yaml:"airflowConfig" json:"airflow_config,omitempty"`
 }
@@ -31,10 +31,10 @@ type AirflowConfig struct {
 	ArtifactMetadataPathPrefix map[uuid.UUID]string
 }
 
-func (r *RuntimeConfig) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, r)
+func (e *EngineConfig) Scan(value interface{}) error {
+	return utils.ScanJsonB(value, e)
 }
 
-func (r *RuntimeConfig) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*r)
+func (e *EngineConfig) Value() (driver.Value, error) {
+	return utils.ValueJsonB(*e)
 }

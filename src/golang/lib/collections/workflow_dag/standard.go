@@ -22,7 +22,7 @@ func (w *standardWriterImpl) CreateWorkflowDag(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	storageConfig *shared.StorageConfig,
-	runtimeConfig *shared.RuntimeConfig,
+	runtimeConfig *shared.EngineConfig,
 	db database.Database,
 ) (*WorkflowDag, error) {
 	insertColumns := []string{WorkflowIdColumn, CreatedAtColumn, StorageConfigColumn, RuntimeConfigColumn}

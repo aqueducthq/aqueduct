@@ -59,7 +59,7 @@ func RegisterWorkflow(
 	taskIds := make([]string, 0, len(dag.Operators))
 	// Generate job spec for each Airflow task
 	for _, op := range dag.Operators {
-		inputArtifactSpecs := make([]artifact.Spec, 0, len(op.Inputs))
+		inputArtifacts := make([]artifact.Artifact, 0, len(op.Inputs))
 		inputContentPathPrefixes := make([]string, 0, len(op.Inputs))
 		inputMetadataPathPrefixes := make([]string, 0, len(op.Inputs))
 		for _, artifactId := range op.Inputs {
@@ -68,12 +68,12 @@ func RegisterWorkflow(
 				return nil, errors.Newf("cannot find artifact with ID %v", artifactId)
 			}
 
-			inputArtifactSpecs = append(inputArtifactSpecs, input.Spec)
+			inputArtifacts = append(inputArtifacts, input)
 			inputContentPathPrefixes = append(inputContentPathPrefixes, artifactToContentPathPrefix[input.Id])
 			inputMetadataPathPrefixes = append(inputMetadataPathPrefixes, artifactToMetadataPathPrefix[input.Id])
 		}
 
-		outputArtifactSpecs := make([]artifact.Spec, 0, len(op.Outputs))
+		outputArtifacts := make([]artifact.Artifact, 0, len(op.Outputs))
 		outputContentPathPrefixes := make([]string, 0, len(op.Outputs))
 		outputMetadataPathPrefixes := make([]string, 0, len(op.Outputs))
 		for _, artifactId := range op.Outputs {
@@ -82,16 +82,16 @@ func RegisterWorkflow(
 				return nil, errors.Newf("cannot find artifact with ID %v", artifactId)
 			}
 
-			outputArtifactSpecs = append(outputArtifactSpecs, output.Spec)
+			outputArtifacts = append(outputArtifacts, output)
 			outputContentPathPrefixes = append(outputContentPathPrefixes, artifactToContentPathPrefix[output.Id])
 			outputMetadataPathPrefixes = append(outputMetadataPathPrefixes, artifactToMetadataPathPrefix[output.Id])
 		}
 
 		jobSpec, err := scheduler.GenerateOperatorJobSpec(
 			ctx,
-			op.Spec,
-			inputArtifactSpecs,
-			outputArtifactSpecs,
+			op,
+			inputArtifacts,
+			outputArtifacts,
 			operatorToMetadataPathPrefix[op.Id],
 			inputContentPathPrefixes,
 			inputMetadataPathPrefixes,
@@ -167,7 +167,7 @@ func RegisterWorkflow(
 	}
 
 	// Update the AirflowRuntimeConfig for `dag`
-	newRuntimeConfig := dag.RuntimeConfig
+	newRuntimeConfig := dag.EngineConfig
 	newRuntimeConfig.AirflowConfig.OperatorToTask = operatorToTask
 	newRuntimeConfig.AirflowConfig.OperatorMetadataPathPrefix = operatorToMetadataPathPrefix
 	newRuntimeConfig.AirflowConfig.ArtifactContentPathPrefix = artifactToContentPathPrefix
