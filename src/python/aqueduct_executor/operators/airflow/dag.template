@@ -1,4 +1,7 @@
+from datetime import datetime
 from airflow.models import DAG
+
+from airflow.operators.python import PythonOperator
 
 from aqueduct_executor.operators.function_executor import execute as func_execute
 from aqueduct_executor.operators.function_executor import spec as func_spec
@@ -8,21 +11,28 @@ from aqueduct_executor.operators.connectors.tabular import execute as conn_execu
 from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
 from aqueduct_executor.operators.utils import enums
 
-def invoke_task(run_id, spec):
+def invoke_task(run_id, **kwargs):
     '''
     Check the spec type and invoke the correct operator.
     First, append the dag_run_id to all of the storage paths in the spec.
     '''
-    if spec.type == enums.JobType.FUNCTION:
-        handle_function(run_id, spec)
-    elif spec.type == enums.JobType.EXTRACT:
-        handle_extract(run_id, spec)
-    elif spec.type == enums.JobType.LOAD:
-        handle_load(run_id, spec)
-    elif spec.type == enums.JobType.PARAM:
-        handle_param(run_id, spec)
+    dag_run_id = kwargs["run_id"]
 
-def handle_function(run_id: str, spec: func_spec.FunctionSpec):
+    spec_type = enums.JobType(spec["type"])
+    if spec_type == enums.JobType.FUNCTION:
+        spec = func_spec.FunctionSpec(**spec)
+        handle_function(spec, dag_run_id)
+    elif spec_type == enums.JobType.EXTRACT:
+        spec = conn_spec.ExtractSpec(**spec)
+        handle_extract(spec, dag_run_id)
+    elif spec_type == enums.JobType.LOAD:
+        spec = conn_spec.LoadSpec(**spec)
+        handle_load(spec, dag_run_id)
+    elif spec_type == enums.JobType.PARAM:
+        spec = param_spec.ParamSpec(**spec)
+        handle_param(spec, dag_run_id)
+
+def handle_function(spec: func_spec.FunctionSpec, run_id: str):
     """
     Invokes a Function operator as an Airflow task.
     It first ensures that all storage paths are unique by appending the run_id. 
@@ -36,7 +46,7 @@ def handle_function(run_id: str, spec: func_spec.FunctionSpec):
     func_execute.execute(spec)
 
 
-def handle_extract(run_id: str, spec: conn_spec.ExtractSpec):
+def handle_extract(spec: conn_spec.ExtractSpec, run_id: str):
     """
     Invokes an Extract operator as an Airflow task.
     It first ensures that all storage paths are unique by appending the run_id. 
@@ -47,7 +57,7 @@ def handle_extract(run_id: str, spec: conn_spec.ExtractSpec):
 
     conn_execute.execute(spec)
 
-def handle_load(run_id: str, spec: conn_spec.LoadSpec):
+def handle_load(spec: conn_spec.LoadSpec, run_id: str):
     """
     Invokes a Load operator as an Airflow task.
     It first ensures that all storage paths are unique by appending the run_id. 
@@ -58,7 +68,7 @@ def handle_load(run_id: str, spec: conn_spec.LoadSpec):
 
     conn_execute.execute(spec)
 
-def handle_param(run_id: str, spec: param_spec.ParamSpec):
+def handle_param(spec: param_spec.ParamSpec, run_id: str):
     """
     Invokes a Parameter operator as an Airflow task.
     It first ensures that all storage paths are unique by appending the run_id. 
@@ -71,9 +81,15 @@ def handle_param(run_id: str, spec: param_spec.ParamSpec):
 
 
 with DAG(
-    dag_id = '{{ dag_id }}'
+    dag_id='{{ dag_id }}',
+    start_date={{ datetime.now() }},
 ) as dag:
+    # Constants to handle JSON serialization
     null = None
+    false = False
+    true = True
+
+
     {% for task in tasks %}
     {{ task.alias }} = PythonOperator(
         task_id='{{ task.id }}',
