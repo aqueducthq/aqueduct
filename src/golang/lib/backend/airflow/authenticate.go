@@ -14,7 +14,10 @@ func Authenticate(ctx context.Context, authConf auth.Config) error {
 	}
 
 	// Test Airflow config by listing all DAGs
-	_, _, err = cli.apiClient.DAGApi.GetDags(cli.ctx).Execute()
+	_, resp, err := cli.apiClient.DAGApi.GetDags(cli.ctx).Execute()
+	if err != nil {
+		return wrapApiError(err, "GetDags", resp)
+	}
 
-	return err
+	return nil
 }
