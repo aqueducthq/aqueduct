@@ -12,11 +12,7 @@ import (
 	_000007 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000007_workflow_dag_edge_pk"
 	_000008 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000008_delete_s3_config"
 	_000009 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000009_metadata_interface_backfill"
-<<<<<<< HEAD
-	_000010 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000010_add_workflow_dag_runtime_config"
-=======
 	_000010 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000010_add_workflow_dag_engine_config"
->>>>>>> eng-877-implement-airflow-compile-job
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
