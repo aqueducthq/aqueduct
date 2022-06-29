@@ -1,5 +1,5 @@
 import json
-from typing import Union
+from typing import Union, List
 
 from aqueduct_executor.operators.connectors.tabular import common, config, extract, load, models
 from aqueduct_executor.operators.utils import enums
