@@ -11,7 +11,7 @@ from aqueduct_executor.operators.connectors.tabular import execute as conn_execu
 from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
 from aqueduct_executor.operators.utils import enums
 
-def invoke_task(run_id, **kwargs):
+def invoke_task(spec, **kwargs):
     '''
     Check the spec type and invoke the correct operator.
     First, append the dag_run_id to all of the storage paths in the spec.
@@ -43,7 +43,7 @@ def handle_function(spec: func_spec.FunctionSpec, run_id: str):
     spec.output_content_paths = ["{}_{}".format(p, run_id) for p in spec.output_content_paths]
     spec.output_metadata_paths = ["{}_{}".format(p, run_id) for p in spec.output_metadata_paths]
 
-    func_execute.execute(spec)
+    func_execute.run(spec)
 
 
 def handle_extract(spec: conn_spec.ExtractSpec, run_id: str):
@@ -55,7 +55,7 @@ def handle_extract(spec: conn_spec.ExtractSpec, run_id: str):
     spec.output_content_path = "{}_{}".format(spec.output_content_path, run_id)
     spec.output_metadata_path = "{}_{}".format(spec.output_metadata_path, run_id)
 
-    conn_execute.execute(spec)
+    conn_execute.run(spec)
 
 def handle_load(spec: conn_spec.LoadSpec, run_id: str):
     """
@@ -66,7 +66,7 @@ def handle_load(spec: conn_spec.LoadSpec, run_id: str):
     spec.input_content_path = "{}_{}".format(spec.input_content_path, run_id)
     spec.input_metadata_path = "{}_{}".format(spec.input_metadata_path, run_id)
 
-    conn_execute.execute(spec)
+    conn_execute.run(spec)
 
 def handle_param(spec: param_spec.ParamSpec, run_id: str):
     """
@@ -77,12 +77,12 @@ def handle_param(spec: param_spec.ParamSpec, run_id: str):
     spec.output_content_path = "{}_{}".format(spec.output_content_path, run_id)
     spec.output_metadata_path = "{}_{}".format(spec.output_metadata_path, run_id)
 
-    param_execute.execute(spec)
+    param_execute.run(spec)
 
 
 with DAG(
     dag_id='{{ dag_id }}',
-    start_date={{ datetime.now() }},
+    start_date=datetime(2022, 1, 1, 1),
 ) as dag:
     # Constants to handle JSON serialization
     null = None
