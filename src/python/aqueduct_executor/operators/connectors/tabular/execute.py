@@ -1,7 +1,7 @@
 import sys
 import traceback
 
-from aqueduct_executor.operators.connectors.tabular import common, config, connector, spec
+from aqueduct_executor.operators.connectors.tabular import common, config, connector, spec, extract
 from aqueduct_executor.operators.utils import enums, utils
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
@@ -28,6 +28,8 @@ def run(spec: spec.Spec):
             run_authenticate(op)
         elif spec.type == enums.JobType.EXTRACT:
             run_extract(spec, op, storage)
+        elif spec.type == enums.JobType.LOADTABLE:
+            run_load_table(spec, op, storage)
         elif spec.type == enums.JobType.LOAD:
             run_load(spec, op, storage)
         elif spec.type == enums.JobType.DISCOVER:
@@ -48,15 +50,35 @@ def run_authenticate(op: connector.TabularConnector):
 
 
 def run_extract(spec: spec.ExtractSpec, op: connector.TabularConnector, storage: Storage):
-    df = op.extract(spec.parameters)
+    extract_params = spec.parameters
+
+    # Search for user-defined placeholder if this is a relational query, and replace them with
+    # the appropriate values.
+    if isinstance(extract_params, extract.RelationalParams):
+        assert len(spec.input_param_names) == len(spec.input_content_paths)
+        input_vals = utils.read_artifacts(
+            storage,
+            spec.input_content_paths,
+            spec.input_metadata_paths,
+            [utils.InputArtifactType.JSON] * len(spec.input_content_paths),
+        )
+        assert all(
+            isinstance(param_val, str) for param_val in input_vals
+        ), "Parameter value must be a string."
+
+        parameters = dict(zip(spec.input_param_names, input_vals))
+        extract_params.expand_placeholders(parameters)
+
+    df = op.extract(extract_params)
     utils.write_artifacts(
         storage,
+        [utils.OutputArtifactType.TABLE],
         [spec.output_content_path],
         [spec.output_metadata_path],
         [df],
-        {},
-        [utils.OutputArtifactType.TABLE],
+        system_metadata={},
     )
+
 
 
 def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Storage):
@@ -69,6 +91,11 @@ def run_load(spec: spec.LoadSpec, op: connector.TabularConnector, storage: Stora
     if len(inputs) != 1:
         raise Exception("Expected 1 input artifact, but got %d" % len(inputs))
     op.load(spec.parameters, inputs[0])
+
+
+def run_load_table(spec: spec.LoadTableSpec, op: connector.TabularConnector, storage: Storage):
+    df = utils._read_csv(storage, spec.csv)
+    op.load(spec.load_parameters.parameters, df)
 
 
 def run_discover(spec: spec.DiscoverSpec, op: connector.TabularConnector, storage: Storage):
