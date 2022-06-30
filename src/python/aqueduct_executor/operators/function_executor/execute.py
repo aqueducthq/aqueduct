@@ -193,9 +193,9 @@ def run(spec: spec.FunctionSpec) -> None:
 
 
 def run_airflow(spec: spec.FunctionSpec) -> None:
-    op_path = get_extract_path(spec)
+    op_path = get_extract_path.run(spec)
 
-    extract_function(spec)
+    extract_function.run(spec)
 
     requirements_path = os.path.join(op_path, "requirements.txt")
 
@@ -203,4 +203,3 @@ def run_airflow(spec: spec.FunctionSpec) -> None:
         os.system("pip3 install -r {}".format(requirements_path))
     
     return run(spec)
-    

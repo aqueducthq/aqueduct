@@ -61,6 +61,18 @@ def extract_function(storage: Storage, spec: spec.FunctionSpec) -> None:
         extract_path=fn_path,
     )
 
+def run(spec):
+    print("Job Spec: \n{}".format(spec.json()))
+
+    try:
+        storage = parse_storage(spec.storage_config)
+        extract_function(storage, spec)
+        # sys.exit(0)
+    except Exception as e:  # Catch all error types
+        print("Exception Raised: ", e)
+        traceback.print_tb(e.__traceback__)
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -70,13 +82,4 @@ if __name__ == "__main__":
     spec_json = base64.b64decode(args.spec)
     spec = spec.parse_spec(spec_json)
 
-    print("Job Spec: \n{}".format(spec.json()))
-
-    try:
-        storage = parse_storage(spec.storage_config)
-        extract_function(storage, spec)
-        sys.exit(0)
-    except Exception as e:  # Catch all error types
-        print("Exception Raised: ", e)
-        traceback.print_tb(e.__traceback__)
-        sys.exit(1)
+    run(spec)
