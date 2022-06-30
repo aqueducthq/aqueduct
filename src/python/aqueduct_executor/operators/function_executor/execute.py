@@ -8,7 +8,7 @@ import tracemalloc
 from contextlib import redirect_stderr, redirect_stdout
 from typing import Any, Callable, Dict, List, Tuple
 
-from aqueduct_executor.operators.function_executor import spec
+from aqueduct_executor.operators.function_executor import spec, get_extract_path, extract_function
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.timer import Timer
@@ -190,3 +190,17 @@ def run(spec: spec.FunctionSpec) -> None:
         print("Exception Raised: ", e)
         traceback.print_tb(e.__traceback__)
         sys.exit(1)
+
+
+def run_airflow(spec: spec.FunctionSpec) -> None:
+    op_path = get_extract_path(spec)
+
+    extract_function(spec)
+
+    requirements_path = os.path.join(op_path, "requirements.txt")
+
+    if os.path.exists(requirements_path):
+        os.system("pip3 install -r {}".format(requirements_path))
+    
+    return run(spec)
+    
