@@ -100,6 +100,10 @@ jobs:
         working-directory: sdk/examples
         run: ls
 
+      - name: cat flow_ids.txt
+        working-directory: sdk/examples
+        run: cat flow_ids.txt
+
       # # Grabs the pid of the process bound to port 8080 and kills it.
       # - name: Kill the server
       #   run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
