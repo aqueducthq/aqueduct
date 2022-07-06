@@ -111,6 +111,7 @@ def infer_flow_ids_from_stdout(
     # Deduplicate before returning
     return list(set(flow_ids))
 
+os.environ["THESCRIPT"] = "CANT BE MOVED"
 
 # The name of the python script to create from the notebook. This will be deleted after the notebook runs.
 NOTEBOOK_SCRIPT_NAME = "temp.py"

@@ -67,20 +67,20 @@ jobs:
 
       - name: do a pull
         run: git pull
-      
+
       - name: switch to main
         run: git checkout main
-      
+
       - name: Find previous release tag name
         run: echo "PREV_TAG=$(git tag --sort=-v:refname | head -n 1)" >> $GITHUB_ENV
-      
+
       - name: Fetch the previous release commit
         run: echo "PREV_COMMIT=$(git rev-parse $PREV_TAG^{})" >> $GITHUB_ENV
 
       # We switch to the old commit so we can run the notebook that existed in the repo when it was released
       - name: Switch to previous release branch
         run: git checkout $PREV_COMMIT
-      
+
       - name: Start the server
         run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
 
