@@ -92,7 +92,7 @@ jobs:
         working-directory: sdk/examples
         timeout-minutes: 10
         run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
-
+ 
       - name: check env var
         run: printenv FLOWIDS
 
