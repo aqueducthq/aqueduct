@@ -141,31 +141,29 @@ def test_check_wrong_number_of_inputs(client):
         check_artifact.get()
 
 
-@check(severity=CheckSeverity.ERROR)
-def success_check_return_numpy_bool(df):
-    return df["total_charges"].mean() < 2500
-
-
 def test_check_with_numpy_bool_output(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=CHURN_SQL_QUERY)
+
+    @check()
+    def success_check_return_numpy_bool(df):
+        return df["total_charges"].mean() < 2500
+
     check_artifact = success_check_return_numpy_bool(sql_artifact)
     assert check_artifact.get()
-
-
-@check(severity=CheckSeverity.ERROR)
-def success_check_return_series_of_booleans(df):
-    return pd.Series([True, True, True])
-
-
-@check()
-def failure_check_return_series_of_booleans(df):
-    return pd.Series([True, False, True])
 
 
 def test_check_with_series_output(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+
+    @check()
+    def success_check_return_series_of_booleans(df):
+        return pd.Series([True, True, True])
+
+    @check()
+    def failure_check_return_series_of_booleans(df):
+        return pd.Series([True, False, True])
 
     passed = success_check_return_series_of_booleans(sql_artifact)
     assert passed.get()
@@ -174,3 +172,24 @@ def test_check_with_series_output(client):
     assert not failed.get()
 
     run_flow_test(client, artifacts=[sql_artifact, passed, failed])
+
+
+def test_check_failure_with_severity(client):
+    db = client.integration(name=get_integration_name())
+    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+
+    # An error check will fail the workflow, but a warning check will not.
+    @check(severity=CheckSeverity.WARNING)
+    def failure_nonblocking_check(df):
+        return False
+
+    @check(severity=CheckSeverity.ERROR)
+    def failure_blocking_check(df):
+        return False
+
+    _ = failure_nonblocking_check(sql_artifact)
+    run_flow_test(client, artifacts=[sql_artifact])
+
+    _ = failure_blocking_check(sql_artifact)
+    run_flow_test(client, artifacts=[sql_artifact], expect_success=False)
+

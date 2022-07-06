@@ -96,6 +96,7 @@ def run_flow_test(
     schedule: str = "",
     num_runs: int = 1,
     delete_flow_after: bool = True,
+    expect_success: bool = True,
 ) -> Optional[Flow]:
     """
     Actually publishes the flow if tests are run with --publish flag. This flow can be deleted
@@ -127,7 +128,7 @@ def run_flow_test(
     return flow
 
 
-def wait_for_flow_runs(client: aqueduct.Client, flow_id: uuid.UUID, num_runs: int = 1) -> int:
+def wait_for_flow_runs(client: aqueduct.Client, flow_id: uuid.UUID, num_runs: int = 1, expect_success: bool = True) -> int:
     """
     Returns only when the specified flow has run successfully at least `num_runs` times.
     Any run failure is not tolerated. Will timeout after a few minutes.
@@ -152,7 +153,10 @@ def wait_for_flow_runs(client: aqueduct.Client, flow_id: uuid.UUID, num_runs: in
             continue
 
         statuses = [flow_run["status"] for flow_run in flow_runs]
-        assert all(status != "failed" for status in statuses), "At least one workflow run failed!"
+        if expect_success:
+            assert all(status != "failed" for status in statuses), "At least one workflow run failed!"
+        else:
+            assert all(status == "failed" for status in statuses), "At least one workflow succeeded!"
 
         if len(flow_runs) < num_runs:
             continue
@@ -162,7 +166,7 @@ def wait_for_flow_runs(client: aqueduct.Client, flow_id: uuid.UUID, num_runs: in
             continue
 
         print(
-            "Workflow %s was created and ran successfully at %s times!" % (flow_id, len(flow_runs))
+            "Workflow %s was created and ran at least %s times!" % (flow_id, len(flow_runs))
         )
         return len(flow_runs)
     return -1

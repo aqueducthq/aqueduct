@@ -30,6 +30,10 @@ class FunctionSpec(BaseModel):
     input_artifact_types: List[enums.InputArtifactType]
     output_artifact_types: List[enums.OutputArtifactType]
 
+    # If the function produces one of these blacklisted outputs exactly, we will fail the
+    # entire workflow. This is currently used to implement SEVERITY=error checks.
+    blacklisted_outputs: List[str]
+
     class Config:
         extra = Extra.forbid
 

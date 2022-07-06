@@ -127,6 +127,18 @@ def run(spec: FunctionSpec) -> None:
         if not isinstance(results, list):
             results = [results]
 
+        # Check if any of the results should be blacklisted.
+        for res in results:
+            if json.dumps(res) in spec.blacklisted_outputs:
+                exec_state.status = ExecutionStatus.FAILED
+                exec_state.failure_type = FailureType.USER
+                exec_state.error = Error(
+                    context="",
+                    tip="The check %s has severity=ERROR and did not pass." % spec.name,
+                )
+                utils.write_exec_state(storage, spec.metadata_path, exec_state)
+                sys.exit(1)
+
         utils.write_artifacts(
             storage,
             spec.output_artifact_types,

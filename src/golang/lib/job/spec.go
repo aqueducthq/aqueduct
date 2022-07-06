@@ -108,6 +108,9 @@ type FunctionSpec struct {
 	OutputMetadataPaths []string        `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
 	InputArtifactTypes  []artifact.Type `json:"input_artifact_types"  yaml:"input_artifact_types"`
 	OutputArtifactTypes []artifact.Type `json:"output_artifact_types"  yaml:"output_artifact_types"`
+
+	// If the function outputs any of these blacklisted values, we will fail workflow execution.
+	BlacklistedOutputs []string `json:"blacklisted_outputs" yaml:"blacklisted_outputs"`
 }
 
 type ParamSpec struct {

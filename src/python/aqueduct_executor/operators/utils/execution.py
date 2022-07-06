@@ -25,7 +25,6 @@ TIP_EXTRACT = "We couldn't execute the provided query. Please double check your 
 TIP_LOAD = "We couldn't load to the integration. Please make sure the target exists, or you have the right permission."
 TIP_DISCOVER = "We couldn't list items in the integration. Please make sure your credentials have the right permission."
 
-
 class Error(BaseModel):
     tip: str = ""  # Information about how the user could fix the error.
     context: str = ""  # More details about the error. Typically a stack trace.
