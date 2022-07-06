@@ -191,7 +191,7 @@ else:
     flow_ids = [args.flow_id]
 
 flowIds = ", ".join(flow_ids)
-bashCommand = "echo 'FLOWIDS=%s' >> $GITHUB_ENV"
+bashCommand = "echo 'FLOWIDS=%s' >> $GITHUB_ENV" % flowIds
 process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
 output, error = process.communicate()
 
