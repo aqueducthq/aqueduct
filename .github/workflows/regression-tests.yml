@@ -93,6 +93,9 @@ jobs:
         timeout-minutes: 10
         run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
 
+      - name: check env var
+        run: printenv THESCRIPT
+
       # Grabs the pid of the process bound to port 8080 and kills it.
       - name: Kill the server
         run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
