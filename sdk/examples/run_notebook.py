@@ -191,14 +191,7 @@ else:
     flow_ids = [args.flow_id]
 
 flowIds = ", ".join(flow_ids)
-bashCommand = "echo 'FLOWIDS=%s' >> $GITHUB_ENV" % flowIds
-process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-output, error = process.communicate()
-
-print("output")
-print(output)
-print("error")
-print(error)
+os.environ["FLOWIDS"] = flowIds
 
 print(
     "Check that the output flow ids %s have had at least one successful run.\n"
