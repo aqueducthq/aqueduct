@@ -191,7 +191,8 @@ else:
     flow_ids = [args.flow_id]
 
 flowIds = ", ".join(flow_ids)
-os.environ["FLOWIDS"] = flowIds
+with open("flow_ids.txt", "w") as f:
+    f.write(flowIds)
 
 print(
     "Check that the output flow ids %s have had at least one successful run.\n"
