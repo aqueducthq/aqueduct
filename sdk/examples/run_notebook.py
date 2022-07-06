@@ -195,6 +195,10 @@ bashCommand = "echo 'FLOWIDS=%s' >> $GITHUB_ENV" % flowIds
 process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
 output, error = process.communicate()
 
+filepath = "%s/flow_ids.txt" % os.environ.get("GOPATH")
+with open(filepath, 'w') as f:
+    f.write(flow_ids)
+
 print("output")
 print(output)
 print("error")
