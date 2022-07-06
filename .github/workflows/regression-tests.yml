@@ -61,33 +61,7 @@ jobs:
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
-      # Grabs the pid of the process bound to port 8080 and kills it.
-      - name: Kill the server
-        run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
-
-      - name: do a pull
-        run: git pull
-      
-      - name: switch to main
-        run: git checkout main
-      
-      - name: Find previous release tag name
-        run: echo "PREV_TAG=$(git tag --sort=-v:refname | head -n 1)" >> $GITHUB_ENV
-      
-      - name: Fetch the previous release commit
-        run: echo "PREV_COMMIT=$(git rev-parse $PREV_TAG^{})" >> $GITHUB_ENV
-
-      - name: Switch to previous release branch
-        run: git checkout $PREV_COMMIT
-      
-      - name: Start the server
-        run: (aqueduct start > $SERVER_LOGS_FILE 2>&1 &)
-
-      - name: Wait for server
-        timeout-minutes: 1
-        run: while ! echo exit | nc localhost 8080; do sleep 1; done
-
-      - name: Run Sentiment Notebook
+      - name: Run Previous Sentiment Notebook
         working-directory: sdk/examples
         timeout-minutes: 10
         run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
@@ -95,9 +69,6 @@ jobs:
       # Grabs the pid of the process bound to port 8080 and kills it.
       - name: Kill the server
         run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
-
-      - name: switch to main
-        run: git checkout main
       
       - name: Update aqueduct with current version release
         run: python3 scripts/install_local.py
@@ -109,7 +80,7 @@ jobs:
         timeout-minutes: 1
         run: while ! echo exit | nc localhost 8080; do sleep 1; done
 
-      - name: Run Sentiment Notebook
+      - name: Run Lastest Sentiment Notebook
         working-directory: sdk/examples
         timeout-minutes: 10
         run: python3 run_notebook.py --path "sentiment_analysis/Sentiment Model.ipynb" --api_key ${{ env.API_KEY }} --server_address localhost:8080
