@@ -12,6 +12,7 @@ import { ArtifactType } from '../../../utils/artifacts';
 import { ReactFlowNodeData, ReactflowNodeType } from '../../../utils/reactflow';
 import ExecutionStatus, { CheckStatus } from '../../../utils/shared';
 import { BaseNode } from './BaseNode.styles';
+import {CheckLevel} from "../../../utils/operators";
 
 type Props = {
   data: ReactFlowNodeData;
@@ -50,6 +51,16 @@ export const Node: React.FC<Props> = ({
     }
   }
 
+  function getOpIDFromArtifactID(artifact_id: string): string {
+    for (const opID in workflowState.selectedDag.operators) {
+      const op = workflowState.selectedDag.operators[opID]
+      if (op.inputs.indexOf(artifact_id) >= 0) {
+        return op.id;
+      }
+    }
+    return "";
+  }
+
   let borderColor, backgroundColor, hoverColor, textColor;
   switch (status) {
     case CheckStatus.Succeeded:
@@ -60,6 +71,16 @@ export const Node: React.FC<Props> = ({
       textColor = 'green.800';
       break;
     case CheckStatus.Failed:
+      // We use yellow to denote a check warning.
+      const checkOpID = getOpIDFromArtifactID(data.nodeId);
+      if (workflowState.selectedDag.operators[checkOpID].spec.check?.level == CheckLevel.Warning) {
+        borderColor = 'yellow.400';
+        backgroundColor = selected ? 'yellow.200' : 'yellow.25';
+        hoverColor = 'yellow.100';
+        textColor = 'yellow.800';
+        break;
+      }
+      // A failed check with error severity should fallthrough.
     case ExecutionStatus.Failed:
       borderColor = 'red.500';
       backgroundColor = selected ? 'red.300' : 'red.25';
