@@ -1,0 +1,105 @@
+from datetime import datetime
+from airflow.models import DAG
+
+from airflow.operators.python import PythonOperator
+
+from aqueduct_executor.operators.function_executor import execute as func_execute
+from aqueduct_executor.operators.function_executor import spec as func_spec
+from aqueduct_executor.operators.param_executor import execute as param_execute
+from aqueduct_executor.operators.param_executor import spec as param_spec
+from aqueduct_executor.operators.connectors.tabular import execute as conn_execute
+from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
+from aqueduct_executor.operators.utils import enums
+
+def invoke_task(spec, **kwargs):
+    '''
+    Check the spec type and invoke the correct operator.
+    First, append the dag_run_id to all of the storage paths in the spec.
+    '''
+    dag_run_id = kwargs["run_id"]
+
+    spec_type = enums.JobType(spec["type"])
+    if spec_type == enums.JobType.FUNCTION:
+        spec = func_spec.FunctionSpec(**spec)
+        handle_function(spec, dag_run_id)
+    elif spec_type == enums.JobType.EXTRACT:
+        spec = conn_spec.ExtractSpec(**spec)
+        handle_extract(spec, dag_run_id)
+    elif spec_type == enums.JobType.LOAD:
+        spec = conn_spec.LoadSpec(**spec)
+        handle_load(spec, dag_run_id)
+    elif spec_type == enums.JobType.PARAM:
+        spec = param_spec.ParamSpec(**spec)
+        handle_param(spec, dag_run_id)
+
+def handle_function(spec: func_spec.FunctionSpec, run_id: str):
+    """
+    Invokes a Function operator as an Airflow task.
+    It first ensures that all storage paths are unique by appending the run_id. 
+    """
+    spec.metadata_path = "{}_{}".format(spec.metadata_path, run_id)
+    spec.input_content_paths = ["{}_{}".format(p, run_id) for p in spec.input_content_paths]
+    spec.input_metadata_paths = ["{}_{}".format(p, run_id) for p in spec.input_metadata_paths]
+    spec.output_content_paths = ["{}_{}".format(p, run_id) for p in spec.output_content_paths]
+    spec.output_metadata_paths = ["{}_{}".format(p, run_id) for p in spec.output_metadata_paths]
+
+    func_execute.run(spec)
+
+
+def handle_extract(spec: conn_spec.ExtractSpec, run_id: str):
+    """
+    Invokes an Extract operator as an Airflow task.
+    It first ensures that all storage paths are unique by appending the run_id. 
+    """
+    spec.metadata_path = "{}_{}".format(spec.metadata_path, run_id)
+    spec.output_content_path = "{}_{}".format(spec.output_content_path, run_id)
+    spec.output_metadata_path = "{}_{}".format(spec.output_metadata_path, run_id)
+
+    conn_execute.run(spec)
+
+def handle_load(spec: conn_spec.LoadSpec, run_id: str):
+    """
+    Invokes a Load operator as an Airflow task.
+    It first ensures that all storage paths are unique by appending the run_id. 
+    """
+    spec.metadata_path = "{}_{}".format(spec.metadata_path, run_id)
+    spec.input_content_path = "{}_{}".format(spec.input_content_path, run_id)
+    spec.input_metadata_path = "{}_{}".format(spec.input_metadata_path, run_id)
+
+    conn_execute.run(spec)
+
+def handle_param(spec: param_spec.ParamSpec, run_id: str):
+    """
+    Invokes a Parameter operator as an Airflow task.
+    It first ensures that all storage paths are unique by appending the run_id. 
+    """
+    spec.metadata_path = "{}_{}".format(spec.metadata_path, run_id)
+    spec.output_content_path = "{}_{}".format(spec.output_content_path, run_id)
+    spec.output_metadata_path = "{}_{}".format(spec.output_metadata_path, run_id)
+
+    param_execute.run(spec)
+
+
+with DAG(
+    dag_id='{{ dag_id }}',
+    start_date=datetime(2022, 1, 1, 1),
+) as dag:
+    # Constants to handle JSON serialization
+    null = None
+    false = False
+    true = True
+
+
+    {% for task in tasks %}
+    {{ task.alias }} = PythonOperator(
+        task_id='{{ task.id }}',
+        python_callable=invoke_task,
+        op_args=[
+    {{ task.spec.json(indent=4, separators=(',', ': ')) }}
+        ],
+    )
+    {% endfor %}
+
+{% for k, v in edges.items() %}
+    {{ task_to_alias[k] }}.set_downstream({{ task_to_alias[v] }})
+{% endfor %}
