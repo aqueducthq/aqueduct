@@ -106,6 +106,7 @@ def run(spec: FunctionSpec) -> None:
     """
     Executes a function operator.
     """
+    print("Started %s job: %s" % (spec.type, spec.name))
 
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
