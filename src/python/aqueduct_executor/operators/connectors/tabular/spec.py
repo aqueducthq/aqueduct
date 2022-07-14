@@ -44,10 +44,12 @@ def unwrap_connector_config(cls, connector_config, values):  # type: ignore
     if "connector_name" not in values:
         raise ValueError("Unknown connector name.")
 
-    values["connector_name"]
-
     if not isinstance(connector_config, dict):
         raise ValueError("connector_config is not a dictionary.")
+    
+    if "conf" not in connector_config:
+        # There is no inner `conf` dictionary to unwrap
+        return connector_config
 
     # This is a static config
     return connector_config["conf"]
