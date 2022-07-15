@@ -10,7 +10,7 @@ if [ $EXIT_CODE != "0" ]; then exit $(($EXIT_CODE)); fi
 
 if test -f "$OP_PATH/requirements.txt"; then pip3 install -r "$OP_PATH/requirements.txt" --no-cache-dir; fi
 
-python3 -m aqueduct_executor.operators.function_executor.execute_function --spec "$JOB_SPEC"
+python3 -m aqueduct_executor.operators.function_executor.main --spec "$JOB_SPEC"
 EXIT_CODE=$?
 
 # Remove the /op suffix.

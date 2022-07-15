@@ -34,6 +34,7 @@ class JobType(str, Enum, metaclass=MetaEnum):
     DISCOVER = "discover"
     PARAM = "param"
     SYSTEM_METRIC = "system_metric"
+    COMPILE_AIRFLOW = "compile_airflow"
 
 
 class InputArtifactType(str, Enum, metaclass=MetaEnum):
