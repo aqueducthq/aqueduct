@@ -162,6 +162,27 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowDagEdgeWriter: s.WorkflowDagEdgeWriter,
 			WorkflowWatcherWriter: s.WorkflowWatcherWriter,
 		},
+		routes.RegisterAirflowWorkflowRoute: &handler.RegisterAirflowWorkflowHandler{
+			RegisterWorkflowHandler: handler.RegisterWorkflowHandler{
+				Database:      s.Database,
+				JobManager:    s.JobManager,
+				GithubManager: s.GithubManager,
+				Vault:         s.Vault,
+				StorageConfig: s.StorageConfig,
+
+				ArtifactReader:    s.ArtifactReader,
+				IntegrationReader: s.IntegrationReader,
+				OperatorReader:    s.OperatorReader,
+				WorkflowReader:    s.WorkflowReader,
+
+				ArtifactWriter:        s.ArtifactWriter,
+				OperatorWriter:        s.OperatorWriter,
+				WorkflowWriter:        s.WorkflowWriter,
+				WorkflowDagWriter:     s.WorkflowDagWriter,
+				WorkflowDagEdgeWriter: s.WorkflowDagEdgeWriter,
+				WorkflowWatcherWriter: s.WorkflowWatcherWriter,
+			},
+		},
 		routes.ResetApiKeyRoute: &handler.ResetApiKeyHandler{
 			Database:   s.Database,
 			UserWriter: s.UserWriter,
