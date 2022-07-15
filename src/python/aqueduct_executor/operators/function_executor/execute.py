@@ -7,7 +7,8 @@ import sys
 import tracemalloc
 from typing import Any, Callable, Dict, List, Tuple
 
-from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
+from aqueduct_executor.operators.function_executor import get_extract_path, extract_function
+from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
@@ -153,14 +154,13 @@ def run(spec: FunctionSpec) -> None:
         sys.exit(1)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--spec", required=True)
-    args = parser.parse_args()
+def run_airflow(spec: FunctionSpec) -> None:
+    op_path = get_extract_path.run(spec)
 
-    spec_json = base64.b64decode(args.spec)
-    spec = parse_spec(spec_json)
+    extract_function.run(spec)
 
-    print("Started %s job: %s" % (spec.type, spec.name))
-
+    requirements_path = os.path.join(op_path, "requirements.txt")
+    if os.path.exists(requirements_path):
+        os.system("pip3 install -r {}".format(requirements_path))
+    
     run(spec)
