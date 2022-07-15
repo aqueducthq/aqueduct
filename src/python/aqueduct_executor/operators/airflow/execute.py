@@ -9,6 +9,7 @@ from aqueduct_executor.operators.function_executor import spec as func_spec
 from aqueduct_executor.operators.param_executor import spec as param_spec
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.storage import parse
+from aqueduct_executor.operators.utils.execution import ExecutionState, Logs
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -27,14 +28,16 @@ def run(spec: spec.CompileAirflowSpec):
     print("Started %s job: %s" % (spec.type, spec.name))
 
     storage = parse.parse_storage(spec.storage_config)
+    exec_state = ExecutionState(user_logs=Logs())
+
     try:
         dag_file = compile(spec)
         data = str.encode(dag_file)
         utils.write_compile_airflow_output(storage, spec.output_content_path, data)
-        utils.write_operator_metadata(storage, spec.metadata_path, err="", logs={})
+        utils.write_exec_state(storage, spec.metadata_path, exec_state)
     except Exception as e:
         traceback.print_exc()
-        utils.write_operator_metadata(storage, spec.metadata_path, err=str(e), logs={})
+        utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
 
 def compile(spec: spec.CompileAirflowSpec) -> str:
