@@ -46,6 +46,7 @@ const (
 	LoadTableJobType      JobType = "load-table"
 	DiscoverJobType       JobType = "discover"
 	WorkflowRetentionType JobType = "workflow_retention"
+	CompileAirflowJobType JobType = "compile_airflow"
 )
 
 // `ExecutorConfiguration` represents the configuration variables that are
@@ -174,6 +175,14 @@ type DiscoverSpec struct {
 	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
 }
 
+type CompileAirflowSpec struct {
+	BasePythonSpec
+	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
+	DagId             string              `json:"dag_id"  yaml:"dag_id"`
+	TaskSpecs         map[string]Spec     `json:"task_specs"  yaml:"task_specs"`
+	TaskEdges         map[string][]string `json:"task_edges"  yaml:"task_edges"`
+}
+
 func (*WorkflowRetentionSpec) Type() JobType {
 	return WorkflowRetentionType
 }
@@ -212,6 +221,10 @@ func (*LoadTableSpec) Type() JobType {
 
 func (*DiscoverSpec) Type() JobType {
 	return DiscoverJobType
+}
+
+func (*CompileAirflowSpec) Type() JobType {
+	return CompileAirflowJobType
 }
 
 // NewWorkflowRetentionSpec constructs a Spec for a WorkflowRetentionJob.
@@ -394,6 +407,31 @@ func NewDiscoverSpec(
 		ConnectorName:     connectorName,
 		ConnectorConfig:   connectorConfig,
 		OutputContentPath: outputContentPath,
+	}
+}
+
+func NewCompileAirflowSpec(
+	name string,
+	storageConfig *shared.StorageConfig,
+	metadataPath string,
+	outputContentPath string,
+	dagId string,
+	taskSpecs map[string]Spec,
+	taskEdges map[string][]string,
+) Spec {
+	return &CompileAirflowSpec{
+		BasePythonSpec: BasePythonSpec{
+			baseSpec: baseSpec{
+				Type: DiscoverJobType,
+				Name: name,
+			},
+			StorageConfig: *storageConfig,
+			MetadataPath:  metadataPath,
+		},
+		OutputContentPath: outputContentPath,
+		DagId:             dagId,
+		TaskSpecs:         taskSpecs,
+		TaskEdges:         taskEdges,
 	}
 }
 

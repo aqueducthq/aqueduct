@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
+	operator_db "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -143,6 +143,8 @@ func ScheduleWorkflow(
 		taskToJobSpec[taskId] = jobSpec
 	}
 
+	taskEdges, err := computeEdges(dag.Operators, operatorToTask)
+
 	operatorMetadataPath := fmt.Sprintf("compile-airflow-metadata-%s", uuid.New().String())
 	operatorOutputPath := fmt.Sprintf("compile-airflow-output-%s", uuid.New().String())
 
@@ -158,16 +160,16 @@ func ScheduleWorkflow(
 		operatorOutputPath,
 		dagId,
 		taskToJobSpec,
-		map[string]string{},
+		taskEdges,
 	)
 
 	log.Infof("Job Spec: %v", jobSpec)
 
-	if err := jobManager.Launch(ctx, jobSpec.Name(), jobSpec); err != nil {
+	if err := jobManager.Launch(ctx, jobSpec.JobName(), jobSpec); err != nil {
 		return nil, err
 	}
 
-	jobStatus, err := job.PollJob(ctx, jobSpec.Name(), jobManager, pollCompileAirflowInterval, pollCompileAirflowTimeout)
+	jobStatus, err := job.PollJob(ctx, jobSpec.JobName(), jobManager, pollCompileAirflowInterval, pollCompileAirflowTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -176,18 +178,18 @@ func ScheduleWorkflow(
 		return nil, errors.New("Compile Airflow job failed.")
 	}
 
-	var metadata operator_result.Metadata
+	var execState shared.ExecutionState
 	if err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,
 		operatorMetadataPath,
-		&metadata,
+		&execState,
 	); err != nil {
 		return nil, err
 	}
 
-	if len(metadata.Error) > 0 {
-		return nil, errors.Newf("Compile Airflow job failed: %v", metadata.Error)
+	if execState.Status != shared.SucceededExecutionStatus {
+		return nil, errors.Newf("Compile Airflow job failed: %v", execState.Error)
 	}
 
 	airflowDagFile, err := storage.NewStorage(storageConfig).Get(ctx, operatorOutputPath)
@@ -215,4 +217,50 @@ func ScheduleWorkflow(
 	}
 
 	return airflowDagFile, nil
+}
+
+func computeEdges(operators map[uuid.UUID]operator_db.DBOperator, operatorToTask map[uuid.UUID]string) (map[string][]string, error) {
+	artifactToSrc := map[uuid.UUID]string{}
+	artifactToDests := map[uuid.UUID][]string{}
+
+	for _, op := range operators {
+		taskId, ok := operatorToTask[op.Id]
+		if !ok {
+			return nil, errors.Newf("Unable to find task ID for operator %v", op.Id)
+		}
+
+		for _, outputArtifact := range op.Outputs {
+			artifactToSrc[outputArtifact] = taskId
+		}
+
+		for _, inputArtifact := range op.Inputs {
+			if _, ok := artifactToDests[inputArtifact]; ok {
+				artifactToDests[inputArtifact] = append(artifactToDests[inputArtifact], taskId)
+			} else {
+				artifactToDests[inputArtifact] = []string{taskId}
+			}
+		}
+	}
+
+	taskEdges := map[string][]string{}
+
+	for artifactId, srcTask := range artifactToSrc {
+		destTasks, ok := artifactToDests[artifactId]
+		if !ok {
+			// This artifact has no downstream operators
+			continue
+		}
+
+		for _, destTask := range destTasks {
+			// There is an implicit edge between `srcTask` and `destTask` via
+			// the artifact `artifactId`.
+			if _, ok := taskEdges[srcTask]; ok {
+				taskEdges[srcTask] = append(taskEdges[srcTask], destTask)
+			} else {
+				taskEdges[srcTask] = []string{destTask}
+			}
+		}
+	}
+
+	return taskEdges, nil
 }
