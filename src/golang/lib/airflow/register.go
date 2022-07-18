@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
@@ -13,7 +12,8 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
+	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -56,59 +56,90 @@ func RegisterWorkflow(
 	artifactToMetadataPathPrefix := storagePathPrefixes.ArtifactMetadataPaths
 
 	taskToJobSpec := make(map[string]job.Spec, len(dag.Operators))
-	taskIds := make([]string, 0, len(dag.Operators))
 	// Generate job spec for each Airflow task
 	for _, op := range dag.Operators {
 		inputArtifacts := make([]artifact.Artifact, 0, len(op.Inputs))
 		inputContentPathPrefixes := make([]string, 0, len(op.Inputs))
 		inputMetadataPathPrefixes := make([]string, 0, len(op.Inputs))
 		for _, artifactId := range op.Inputs {
-			input, ok := dag.Artifacts[artifactId]
+			dbInputArtifact, ok := dag.Artifacts[artifactId]
 			if !ok {
 				return nil, errors.Newf("cannot find artifact with ID %v", artifactId)
 			}
 
-			inputArtifacts = append(inputArtifacts, input)
-			inputContentPathPrefixes = append(inputContentPathPrefixes, artifactToContentPathPrefix[input.Id])
-			inputMetadataPathPrefixes = append(inputMetadataPathPrefixes, artifactToMetadataPathPrefix[input.Id])
+			contentPath := artifactToContentPathPrefix[artifactId]
+			metadataPath := artifactToMetadataPathPrefix[artifactId]
+
+			inputArtifact, err := artifact.NewArtifact(
+				dbInputArtifact,
+				contentPath,
+				metadataPath,
+				nil,
+				storageConfig,
+				nil,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			inputArtifacts = append(inputArtifacts, inputArtifact)
+			inputContentPathPrefixes = append(inputContentPathPrefixes, contentPath)
+			inputMetadataPathPrefixes = append(inputMetadataPathPrefixes, metadataPath)
 		}
 
 		outputArtifacts := make([]artifact.Artifact, 0, len(op.Outputs))
 		outputContentPathPrefixes := make([]string, 0, len(op.Outputs))
 		outputMetadataPathPrefixes := make([]string, 0, len(op.Outputs))
 		for _, artifactId := range op.Outputs {
-			output, ok := dag.Artifacts[artifactId]
+			dbOutputArtifact, ok := dag.Artifacts[artifactId]
 			if !ok {
 				return nil, errors.Newf("cannot find artifact with ID %v", artifactId)
 			}
 
-			outputArtifacts = append(outputArtifacts, output)
-			outputContentPathPrefixes = append(outputContentPathPrefixes, artifactToContentPathPrefix[output.Id])
-			outputMetadataPathPrefixes = append(outputMetadataPathPrefixes, artifactToMetadataPathPrefix[output.Id])
+			contentPath := artifactToContentPathPrefix[artifactId]
+			metadataPath := artifactToMetadataPathPrefix[artifactId]
+
+			outputArtifact, err := artifact.NewArtifact(
+				dbOutputArtifact,
+				contentPath,
+				metadataPath,
+				nil,
+				storageConfig,
+				nil,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			outputArtifacts = append(outputArtifacts, outputArtifact)
+			outputContentPathPrefixes = append(outputContentPathPrefixes, contentPath)
+			outputMetadataPathPrefixes = append(outputMetadataPathPrefixes, metadataPath)
 		}
 
-		jobSpec, err := scheduler.GenerateOperatorJobSpec(
+		airflowOperator, err := operator.NewOperator(
 			ctx,
 			op,
 			inputArtifacts,
-			outputArtifacts,
-			operatorToMetadataPathPrefix[op.Id],
 			inputContentPathPrefixes,
 			inputMetadataPathPrefixes,
+			outputArtifacts,
 			outputContentPathPrefixes,
 			outputMetadataPathPrefixes,
-			storageConfig,
+			nil,
 			jobManager,
 			vault,
+			storageConfig,
+			db,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		taskId := generateTaskId(op.Name, op.Id)
-		taskIds = append(taskIds, taskId)
+		jobSpec := airflowOperator.JobSpec()
 
-		operatorToTask[op.Id] = taskId
+		taskId := generateTaskId(airflowOperator.Name(), airflowOperator.ID())
+
+		operatorToTask[airflowOperator.ID()] = taskId
 		taskToJobSpec[taskId] = jobSpec
 	}
 
@@ -127,9 +158,7 @@ func RegisterWorkflow(
 		operatorOutputPath,
 		dagId,
 		taskToJobSpec,
-		map[string]string{
-			taskIds[0]: taskIds[1],
-		},
+		map[string]string{},
 	)
 
 	log.Infof("Job Spec: %v", jobSpec)
