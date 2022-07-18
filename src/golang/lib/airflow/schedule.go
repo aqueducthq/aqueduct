@@ -25,13 +25,13 @@ const (
 	pollCompileAirflowTimeout  = 30 * time.Second
 )
 
-// RegisterWorkflow registers a workflow with an Airflow backend.
+// ScheduleWorkflow schedules a workflow with an Airflow backend.
 // It returns the Airflow DAG Python spec file and an error, if any.
 //
 // Assumptions:
 //   - All of the in-memory fields of `dag` are set.
 //   - All of the in-memory fields of each Operator in `dag.Operators` are set.
-func RegisterWorkflow(
+func ScheduleWorkflow(
 	ctx context.Context,
 	dag *workflow_dag.DBWorkflowDag,
 	storageConfig *shared.StorageConfig,
