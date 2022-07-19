@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
+	"github.com/aqueducthq/aqueduct/lib/airflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
@@ -142,7 +143,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 
 	args.workflowDag.Metadata.Id = workflowId
 
-	airflowFile, err := airflow.RegisterWorkflow(
+	airflowFile, err := airflow.ScheduleWorkflow(
 		ctx,
 		args.workflowDag,
 		h.StorageConfig,
@@ -175,6 +176,6 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 
 	return &registerAirflowWorkflowResponse{
 		Id:   workflowId,
-		File: airflowFile,
+		File: string(airflowFile),
 	}, http.StatusOK, nil
 }
