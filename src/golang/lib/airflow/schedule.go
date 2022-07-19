@@ -137,7 +137,7 @@ func ScheduleWorkflow(
 
 		jobSpec := airflowOperator.JobSpec()
 
-		taskId := generateTaskId(airflowOperator.Name(), airflowOperator.ID())
+		taskId := generateTaskId(airflowOperator.Name())
 
 		operatorToTask[airflowOperator.ID()] = taskId
 		taskToJobSpec[taskId] = jobSpec
