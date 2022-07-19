@@ -192,8 +192,8 @@ func ScheduleWorkflow(
 		return nil, err
 	}
 
-	if execState.Status != shared.SucceededExecutionStatus {
-		return nil, errors.Newf("Compile Airflow job failed: %v", execState.Error)
+	if execState.Status == shared.FailedExecutionStatus {
+		return nil, errors.Newf("Compile Airflow job failed: %v \n logs: %v \n failure type: %v", execState.Error, execState.UserLogs, execState.FailureType)
 	}
 
 	airflowDagFile, err := storage.NewStorage(storageConfig).Get(ctx, operatorOutputPath)
