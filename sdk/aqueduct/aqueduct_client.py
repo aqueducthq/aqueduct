@@ -13,12 +13,14 @@ from .artifact import Artifact, ArtifactSpec
 from .dag import (
     DAG,
     AddOrReplaceOperatorDelta,
+    AirflowEngineConfig,
     Metadata,
+    EngineConfig,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from .enums import RelationalDBServices, ServiceType
+from .enums import RelationalDBServices, RuntimeType, ServiceType
 from .error import (
     IncompleteFlowException,
     InvalidIntegrationException,
@@ -28,6 +30,7 @@ from .error import (
 from .flow import Flow
 from .flow_run import _show_dag
 from .github import Github
+from .integrations.airflow_integration import AirflowIntegration
 from .integrations.google_sheets_integration import GoogleSheetsIntegration
 from .integrations.integration import IntegrationInfo
 from .integrations.s3_integration import S3Integration
@@ -91,7 +94,7 @@ class Client:
         self._connected_integrations: Dict[
             str, IntegrationInfo
         ] = self._api_client.list_integrations()
-        self._dag = DAG(metadata=Metadata())
+        self._dag = DAG(metadata=Metadata(), engine_config=EngineConfig())
 
         # Will show graph if in an ipynb or Python console, but not if running a Python script.
         self._in_notebook_or_console_context = (not hasattr(main, "__file__")) and (
@@ -228,6 +231,12 @@ class Client:
                 dag=self._dag,
                 metadata=integration_info,
             )
+        elif integration_info.service == ServiceType.AIRFLOW:
+            return AirflowIntegration(
+                api_client=self._api_client,
+                dag=self._dag,
+                metadata=integration_info,
+            )
         else:
             raise InvalidIntegrationException(
                 "This method does not support loading integration of type %s"
@@ -275,6 +284,7 @@ class Client:
         schedule: str = "",
         k_latest_runs: int = -1,
         artifacts: Optional[List[GenericArtifact]] = None,
+        engine: AirflowIntegration = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -334,7 +344,24 @@ class Client:
             retention_policy=retention_policy,
         )
 
-        flow_id = self._api_client.register_workflow(dag).id
+        if engine:
+            # This is an Airflow workflow
+            dag.engine_config = EngineConfig(
+                type=RuntimeType.AIRFLOW,
+                airflow_config=AirflowEngineConfig(
+                    integration_id=engine._metadata.id,
+                )
+            )
+            resp = self._api_client.register_airflow_workflow(dag)
+            flow_id, airflow_file = resp.id, resp.file
+
+            file = "{}_airflow.py".format(name)
+            with open(file, "w") as f:
+                f.write(airflow_file)
+            print('''The Airflow DAG file has been downloaded to: {}. 
+                Please copy it to your Airflow server to begin execution.'''.format(file))
+        else:
+            flow_id = self._api_client.register_workflow(dag).id
 
         url = generate_ui_url(
             self._api_client.construct_base_url(),

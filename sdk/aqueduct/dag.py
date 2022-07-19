@@ -20,6 +20,7 @@ from aqueduct.operators import (
     serialize_parameter_value,
 )
 from pydantic import BaseModel
+from aqueduct.enums import RuntimeType
 
 
 class Schedule(BaseModel):
@@ -41,6 +42,18 @@ class Metadata(BaseModel):
     retention_policy: Optional[RetentionPolicy]
 
 
+class AqueductEngineConfig(BaseModel):
+    pass
+
+
+class AirflowEngineConfig(BaseModel):
+    integration_id: uuid.UUID
+
+class EngineConfig(BaseModel):
+    type: RuntimeType = RuntimeType.AQUEDUCT
+    aqueduct_config: Optional[AqueductEngineConfig]
+    airflow_config: Optional[AirflowEngineConfig]
+
 class DAG(BaseModel):
     operators: Dict[str, Operator] = {}
     artifacts: Dict[str, Artifact] = {}
@@ -51,6 +64,7 @@ class DAG(BaseModel):
 
     # These fields must be set when publishing the workflow
     metadata: Metadata
+    engine_config: EngineConfig
 
     class Config:
         fields = {

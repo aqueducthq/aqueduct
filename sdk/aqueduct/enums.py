@@ -66,6 +66,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     GOOGLE_SHEETS = "Google Sheets"
     S3 = "S3"
     SQLITE = "SQLite"
+    AIRFLOW = "Airflow"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -133,3 +134,9 @@ class ArtifactType(Enum, metaclass=MetaEnum):
     NUMBER = "number"
     BOOL = "boolean"
     PARAM = "param"
+
+
+class RuntimeType(Enum, metaclass=MetaEnum):
+    AQUEDUCT = "aqueduct"
+    AIRFLOW = "airflow"
+    

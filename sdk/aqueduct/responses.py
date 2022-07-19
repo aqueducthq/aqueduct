@@ -118,6 +118,18 @@ class RegisterWorkflowResponse(BaseModel):
     id: uuid.UUID
 
 
+class RegisterAirflowWorkflowResponse(BaseModel):
+    """This is the response object returned by api_client.register_airflow_workflow().
+
+    Attributes:
+        id:
+            The uuid if of the newly registered workflow.
+    """
+
+    id: uuid.UUID
+    file: str
+
+
 class ListWorkflowResponseEntry(BaseModel):
     """A list of these response objects is returned by api_client.list_workflows()
     and corresponds with a single workflow.

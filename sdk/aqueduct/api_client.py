@@ -20,6 +20,7 @@ from aqueduct.responses import (
     OperatorResult,
     PreviewResponse,
     RegisterWorkflowResponse,
+    RegisterAirflowWorkflowResponse,
 )
 
 from aqueduct import utils
@@ -95,6 +96,7 @@ class APIClient:
 
     PREVIEW_ROUTE = "/api/preview"
     REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
+    REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register_airflow"
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
@@ -281,6 +283,28 @@ class APIClient:
         utils.raise_errors(resp)
 
         return RegisterWorkflowResponse(**resp.json())
+
+    
+    def register_airflow_workflow(
+        self,
+        dag: DAG,
+    ) -> RegisterAirflowWorkflowResponse:
+        headers = utils.generate_auth_headers(self.api_key)
+        body = {
+            "dag": dag.json(exclude_none=True),
+        }
+
+        files: Dict[str, IO[Any]] = {}
+        for op in dag.list_operators():
+            file = op.file()
+            if file:
+                files[str(op.id)] = io.BytesIO(file)
+
+        url = self._construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
+        resp = requests.post(url, headers=headers, data=body, files=files)
+        utils.raise_errors(resp)
+
+        return RegisterAirflowWorkflowResponse(**resp.json())
 
     def refresh_workflow(
         self,
