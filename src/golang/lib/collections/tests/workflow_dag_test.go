@@ -91,6 +91,10 @@ func TestCreateWorkflowDag(t *testing.T) {
 				Bucket: "bucket-test",
 			},
 		},
+		EngineConfig: shared.EngineConfig{
+			Type:           shared.AqueductEngineType,
+			AqueductConfig: &shared.AqueductConfig{},
+		},
 	}
 
 	actualWorkflowDag, err := writers.workflowDagWriter.CreateWorkflowDag(
