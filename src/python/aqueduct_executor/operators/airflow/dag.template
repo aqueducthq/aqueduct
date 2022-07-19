@@ -81,9 +81,9 @@ def handle_param(spec: param_spec.ParamSpec, run_id: str):
 
 
 with DAG(
-    dag_id={{ dag_id }},
+    dag_id='{{ dag_id }}',
     start_date=datetime(2022, 1, 1, 1),
-    schedule_interval='{{ "\'" + schedule + "'\" if schedule else None }}',
+    schedule_interval='{{ schedule }}',
 ) as dag:
     # Constants to handle JSON serialization
     null = None
