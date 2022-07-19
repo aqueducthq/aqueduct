@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Literal, Union
+from typing import Dict, List, Literal, Union
 
 from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
 from aqueduct_executor.operators.function_executor import spec as func_spec
@@ -20,8 +20,9 @@ class CompileAirflowSpec(BaseModel):
     metadata_path: str
     output_content_path: str
     dag_id: str
+    cron_schedule: str
     task_specs: Dict[str, OperatorSpec]
-    task_edges: Dict[str, str]
+    task_edges: Dict[str, List[str]]
 
 
 def parse_spec(spec_json: str) -> CompileAirflowSpec:

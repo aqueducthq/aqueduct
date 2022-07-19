@@ -83,6 +83,7 @@ def handle_param(spec: param_spec.ParamSpec, run_id: str):
 with DAG(
     dag_id='{{ dag_id }}',
     start_date=datetime(2022, 1, 1, 1),
+    schedule_interval='{{ schedule }}',
 ) as dag:
     # Constants to handle JSON serialization
     null = None
@@ -100,6 +101,8 @@ with DAG(
     )
     {% endfor %}
 
-{% for k, v in edges.items() %}
-    {{ task_to_alias[k] }}.set_downstream({{ task_to_alias[v] }})
+{% for src, dests in edges.items() %}
+    {% for dest in dests %}
+        {{ task_to_alias[src] }}.set_downstream({{ task_to_alias[dests] }})
+    {% endfor %}
 {% endfor %}

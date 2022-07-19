@@ -51,9 +51,6 @@ def compile(spec: spec.CompileAirflowSpec) -> str:
     task_to_alias = {}
     i = 0
     for task_id, task_spec in spec.task_specs.items():
-
-        # Todo figure out dependencies
-
         alias = "t{}".format(i)
         t = Task(task_id, task_spec, alias)
         tasks.append(t)
@@ -71,6 +68,7 @@ def compile(spec: spec.CompileAirflowSpec) -> str:
     template = env.get_template("dag.template")
     r = template.render(
         dag_id=spec.dag_id,
+        schedule=spec.cron_schedule,
         tasks=tasks,
         edges=spec.task_edges,
         task_to_alias=task_to_alias,
