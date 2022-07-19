@@ -110,7 +110,7 @@ func (h *RegisterAirflowWorkflowHandler) Prepare(r *http.Request) (interface{}, 
 }
 
 func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*registerWorkflowArgs)
+	args := interfaceArgs.(*registerAirflowWorkflowArgs)
 
 	emptyResp := registerAirflowWorkflowResponse{}
 
