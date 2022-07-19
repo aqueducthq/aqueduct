@@ -1,21 +1,20 @@
 package airflow
 
 import (
-	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/dropbox/godropbox/errors"
-	"github.com/google/uuid"
 )
 
 // generateDagId generates an Airflow DAG ID for a workflow.
 func generateDagId(workflowName string) string {
-	return workflowName
+	return strings.ReplaceAll(workflowName, " ", "_")
 }
 
 // generateTaskId generates an Airflow task ID for an operator.
-func generateTaskId(operatorName string, operatorId uuid.UUID) string {
-	return fmt.Sprintf("%s-%s", operatorName, operatorId)
+func generateTaskId(operatorName string) string {
+	return strings.ReplaceAll(operatorName, " ", "_")
 }
 
 // wrapApiErrors wraps an error from the Airflow API using the error returned
