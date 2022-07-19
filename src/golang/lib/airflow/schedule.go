@@ -144,6 +144,9 @@ func ScheduleWorkflow(
 	}
 
 	taskEdges, err := computeEdges(dag.Operators, operatorToTask)
+	if err != nil {
+		return nil, err
+	}
 
 	operatorMetadataPath := fmt.Sprintf("compile-airflow-metadata-%s", uuid.New().String())
 	operatorOutputPath := fmt.Sprintf("compile-airflow-output-%s", uuid.New().String())
@@ -159,6 +162,7 @@ func ScheduleWorkflow(
 		operatorMetadataPath,
 		operatorOutputPath,
 		dagId,
+		string(dag.Metadata.Schedule.CronSchedule),
 		taskToJobSpec,
 		taskEdges,
 	)

@@ -179,6 +179,7 @@ type CompileAirflowSpec struct {
 	BasePythonSpec
 	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
 	DagId             string              `json:"dag_id"  yaml:"dag_id"`
+	CronSchedule      string              `json:"cron_schedule"  yaml:"cron_schedule"`
 	TaskSpecs         map[string]Spec     `json:"task_specs"  yaml:"task_specs"`
 	TaskEdges         map[string][]string `json:"task_edges"  yaml:"task_edges"`
 }
@@ -416,6 +417,7 @@ func NewCompileAirflowSpec(
 	metadataPath string,
 	outputContentPath string,
 	dagId string,
+	cronSchedule string,
 	taskSpecs map[string]Spec,
 	taskEdges map[string][]string,
 ) Spec {
@@ -430,6 +432,7 @@ func NewCompileAirflowSpec(
 		},
 		OutputContentPath: outputContentPath,
 		DagId:             dagId,
+		CronSchedule:      cronSchedule,
 		TaskSpecs:         taskSpecs,
 		TaskEdges:         taskEdges,
 	}
