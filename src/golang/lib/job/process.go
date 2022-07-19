@@ -24,6 +24,7 @@ const (
 	connectorPythonPath          = "operators.connectors.tabular.main"
 	paramPythonPath              = "operators.param_executor.main"
 	systemMetricPythonPath       = "operators.system_metric_executor.main"
+	compileAirflowPythonPath     = "operators.airflow.main"
 	executorBinary               = "executor"
 	functionExecutorBashScript   = "start-function-executor.sh"
 
@@ -232,6 +233,19 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"python3",
 			"-m",
 			fmt.Sprintf("%s.%s", j.conf.PythonExecutorPackage, systemMetricPythonPath),
+			"--spec",
+			specStr,
+		), nil
+	} else if spec.Type() == CompileAirflowJobType {
+		specStr, err := EncodeSpec(spec, JsonSerializationType)
+		if err != nil {
+			return nil, err
+		}
+
+		return exec.Command(
+			"python3",
+			"-m",
+			fmt.Sprintf("%s.%s", j.conf.PythonExecutorPackage, compileAirflowPythonPath),
 			"--spec",
 			specStr,
 		), nil

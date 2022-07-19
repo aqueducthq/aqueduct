@@ -9,8 +9,8 @@ import (
 )
 
 // generateDagId generates an Airflow DAG ID for a workflow.
-func generateDagId(workflowName string, workflowId uuid.UUID) string {
-	return fmt.Sprintf("%s-%s", workflowName, workflowId)
+func generateDagId(workflowName string) string {
+	return workflowName
 }
 
 // generateTaskId generates an Airflow task ID for an operator.

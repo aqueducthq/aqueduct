@@ -40,7 +40,7 @@ func ScheduleWorkflow(
 	db database.Database,
 	workflowDagWriter workflow_dag.Writer,
 ) ([]byte, error) {
-	dagId := generateDagId(dag.Metadata.Name, dag.WorkflowId)
+	dagId := generateDagId(dag.Metadata.Name)
 
 	log.Infof("Dag ID: %v", dagId)
 
