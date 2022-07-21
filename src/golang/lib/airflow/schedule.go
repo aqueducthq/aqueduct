@@ -238,11 +238,7 @@ func computeEdges(operators map[uuid.UUID]operator_db.DBOperator, operatorToTask
 		}
 
 		for _, inputArtifact := range op.Inputs {
-			if _, ok := artifactToDests[inputArtifact]; ok {
-				artifactToDests[inputArtifact] = append(artifactToDests[inputArtifact], taskId)
-			} else {
-				artifactToDests[inputArtifact] = []string{taskId}
-			}
+			artifactToDests[inputArtifact] = append(artifactToDests[inputArtifact], taskId)
 		}
 	}
 
@@ -258,11 +254,7 @@ func computeEdges(operators map[uuid.UUID]operator_db.DBOperator, operatorToTask
 		for _, destTask := range destTasks {
 			// There is an implicit edge between `srcTask` and `destTask` via
 			// the artifact `artifactId`.
-			if _, ok := taskEdges[srcTask]; ok {
-				taskEdges[srcTask] = append(taskEdges[srcTask], destTask)
-			} else {
-				taskEdges[srcTask] = []string{destTask}
-			}
+			taskEdges[srcTask] = append(taskEdges[srcTask], destTask)
 		}
 	}
 
