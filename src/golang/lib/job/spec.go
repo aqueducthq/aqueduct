@@ -423,7 +423,7 @@ func NewCompileAirflowSpec(
 ) Spec {
 	return &CompileAirflowSpec{
 		BasePythonSpec: BasePythonSpec{
-			baseSpec: baseSpec{
+			BaseSpec: BaseSpec{
 				Type: CompileAirflowJobType,
 				Name: name,
 			},
