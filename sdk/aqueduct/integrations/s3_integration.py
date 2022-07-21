@@ -14,7 +14,7 @@ from aqueduct.operators import (
     S3LoadParams,
     SaveConfig,
 )
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.table_artifact import DataArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
 
 
@@ -34,7 +34,8 @@ class S3Integration(Integration):
         format: S3FileFormat,
         name: Optional[str] = None,
         description: str = "",
-    ) -> TableArtifact:
+        data_type: Optional[str] = None,
+    ) -> DataArtifact:
         """
         Retrieves a file from the S3 integration.
 
@@ -53,7 +54,7 @@ class S3Integration(Integration):
                 Description of the query.
 
         Returns:
-            TableArtifact representing the S3 File.
+            DataArtifact representing the S3 File.
         """
         integration_info = self._metadata
 
@@ -74,7 +75,9 @@ class S3Integration(Integration):
                                 service=integration_info.service,
                                 integration_id=integration_info.id,
                                 parameters=S3ExtractParams(
-                                    filepath=json.dumps(filepaths), format=format
+                                    filepath=json.dumps(filepaths), 
+                                    format=format,
+                                    data_type=data_type
                                 ),
                             )
                         ),
@@ -91,7 +94,7 @@ class S3Integration(Integration):
             ],
         )
 
-        return TableArtifact(
+        return DataArtifact(
             api_client=self._api_client,
             dag=self._dag,
             artifact_id=output_artifact_id,
@@ -107,7 +110,7 @@ class S3Integration(Integration):
             format:
                 S3 Fileformat to save as. Can be CSV, JSON, or Parquet.
         Returns:
-            SaveConfig object to use in TableArtifact.save()
+            SaveConfig object to use in DataArtifact.save()
         """
         return SaveConfig(
             integration_info=self._metadata,

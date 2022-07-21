@@ -51,7 +51,7 @@ class OperatorResult(BaseModel):
     failure_type: Optional[FailureType] = None
 
 
-class TableArtifactResult(BaseModel):
+class DataArtifactResult(BaseModel):
     """This represents the results of a single table artifact.
 
     Attributes:
@@ -80,7 +80,7 @@ class ParamArtifactResult(BaseModel):
 
 
 class ArtifactResult(BaseModel):
-    table: Optional[TableArtifactResult]
+    table: Optional[DataArtifactResult]
     metric: Optional[MetricArtifactResult]
     check: Optional[CheckArtifactResult]
     param: Optional[ParamArtifactResult]

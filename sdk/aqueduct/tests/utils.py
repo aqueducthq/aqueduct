@@ -23,7 +23,7 @@ from aqueduct.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.table_artifact import DataArtifact
 from aqueduct.utils import generate_uuid
 
 
@@ -134,7 +134,7 @@ def default_table_artifact(
     artifact_name="table_artifact",
     artifact_id=None,
     api_client=None,
-) -> TableArtifact:
+) -> DataArtifact:
     if not api_client:
         api_client = APIClient("", "")
     if not operator_id:
@@ -153,4 +153,4 @@ def default_table_artifact(
         operators=[op],
         artifacts=[artifact],
     )
-    return TableArtifact(api_client=api_client, dag=dag, artifact_id=artifact_id)
+    return DataArtifact(api_client=api_client, dag=dag, artifact_id=artifact_id)

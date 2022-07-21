@@ -13,7 +13,7 @@ from aqueduct.error import InternalAqueductError
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import Operator
 from aqueduct.param_artifact import ParamArtifact
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.table_artifact import DataArtifact
 from aqueduct.utils import generate_ui_url, human_readable_timestamp, format_header_for_print
 
 
@@ -78,7 +78,7 @@ class FlowRun:
 
     def artifact(
         self, name: str
-    ) -> Optional[Union[TableArtifact, MetricArtifact, CheckArtifact, ParamArtifact]]:
+    ) -> Optional[Union[DataArtifact, MetricArtifact, CheckArtifact, ParamArtifact]]:
         """Gets the Artifact from the flow run based on the name of the artifact.
 
         Args:
@@ -95,7 +95,7 @@ class FlowRun:
         if artifact_from_dag is None:
             return None
         elif get_artifact_type(artifact_from_dag) is ArtifactType.TABLE:
-            return TableArtifact(
+            return DataArtifact(
                 self._api_client, self._dag, artifact_from_dag.id, from_flow_run=True
             )
         elif get_artifact_type(artifact_from_dag) is ArtifactType.NUMBER:

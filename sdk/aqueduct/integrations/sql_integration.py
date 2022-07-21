@@ -17,7 +17,7 @@ from aqueduct.operators import (
     RelationalDBLoadParams,
     SaveConfig,
 )
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.table_artifact import DataArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_uuid
 
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
@@ -101,7 +101,7 @@ class RelationalDBIntegration(Integration):
         query: Union[str, RelationalDBExtractParams],
         name: Optional[str] = None,
         description: str = "",
-    ) -> TableArtifact:
+    ) -> DataArtifact:
         """
         Runs a SQL query against the RelationalDB integration.
 
@@ -114,7 +114,7 @@ class RelationalDBIntegration(Integration):
                 Description of the query.
 
         Returns:
-            TableArtifact representing result of the SQL query.
+            DataArtifact representing result of the SQL query.
         """
         integration_info = self._metadata
 
@@ -200,7 +200,7 @@ class RelationalDBIntegration(Integration):
             ],
         )
 
-        return TableArtifact(
+        return DataArtifact(
             api_client=self._api_client,
             dag=self._dag,
             artifact_id=sql_output_artifact_id,
@@ -217,7 +217,7 @@ class RelationalDBIntegration(Integration):
                 The update mode to use when saving the artifact as a relational table.
                 Possible values are: APPEND, REPLACE, or FAIL.
         Returns:
-            SaveConfig object to use in TableArtifact.save()
+            SaveConfig object to use in DataArtifact.save()
         """
         return SaveConfig(
             integration_info=self._metadata,

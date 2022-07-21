@@ -29,7 +29,7 @@ from aqueduct.operators import (
     SalesforceExtractParams,
     SalesforceLoadParams,
 )
-from aqueduct.responses import Logs, OperatorResult, PreviewResponse, TableArtifactResult
+from aqueduct.responses import Logs, OperatorResult, PreviewResponse, DataArtifactResult
 from aqueduct.tests.utils import _construct_dag, _construct_operator
 from aqueduct.utils import generate_uuid
 
@@ -90,7 +90,7 @@ def test_preview_response_loading():
         user_logs=Logs(stdout="These are the operator logs"),
     )
     artifact_id = uuid.uuid4()
-    artifact_result = TableArtifactResult(
+    artifact_result = DataArtifactResult(
         table_schema=[{"Col 1": "int"}, {"Col 2": "str"}],
         data=b"This is a serialized pandas dataframe",
     )

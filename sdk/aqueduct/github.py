@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 from aqueduct.api_client import APIClient
 from aqueduct.enums import FunctionGranularity, FunctionType, GithubRepoConfigContentType
 from aqueduct.error import InvalidGithubQueryError
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.table_artifact import DataArtifact
 from aqueduct.templates import DEFAULT_OP_METHOD_NAME
 from aqueduct.utils import MODEL_FILE_NAME
 
@@ -158,7 +158,7 @@ class Github:
             op_name,
         )
 
-        def wrapped(*inputs: TableArtifact) -> TableArtifact:
+        def wrapped(*inputs: DataArtifact) -> DataArtifact:
             new_function_artifact = wrap_spec(
                 OperatorSpec(function=function_spec),
                 *inputs,
@@ -166,7 +166,7 @@ class Github:
                     "github_function", self.repo_url, self.branch, path or ""
                 ),
             )
-            assert isinstance(new_function_artifact, TableArtifact)
+            assert isinstance(new_function_artifact, DataArtifact)
             return new_function_artifact
 
         return wrapped

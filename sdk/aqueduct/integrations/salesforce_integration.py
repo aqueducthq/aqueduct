@@ -14,7 +14,7 @@ from aqueduct.operators import (
     SalesforceLoadParams,
     SaveConfig,
 )
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.table_artifact import DataArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
 
 
@@ -30,7 +30,7 @@ class SalesforceIntegration(Integration):
 
     def search(
         self, search_query: str, name: Optional[str] = None, description: str = ""
-    ) -> TableArtifact:
+    ) -> DataArtifact:
         """
         Runs a search against the Salesforce integration.
 
@@ -43,19 +43,19 @@ class SalesforceIntegration(Integration):
                 Description of the query.
 
         Returns:
-            TableArtifact representing result of the SQL query.
+            DataArtifact representing result of the SQL query.
         """
         output_artifact_id = self._add_extract_operation(
             name, description, search_query, SalesforceExtractType.SEARCH
         )
 
-        return TableArtifact(
+        return DataArtifact(
             api_client=self._api_client,
             dag=self._dag,
             artifact_id=output_artifact_id,
         )
 
-    def query(self, query: str, name: Optional[str] = None, description: str = "") -> TableArtifact:
+    def query(self, query: str, name: Optional[str] = None, description: str = "") -> DataArtifact:
         """
         Runs a query against the Salesforce integration.
 
@@ -68,13 +68,13 @@ class SalesforceIntegration(Integration):
                 Description of the query.
 
         Returns:
-            TableArtifact representing result of the SQL query.
+            DataArtifact representing result of the SQL query.
         """
         output_artifact_id = self._add_extract_operation(
             name, description, query, SalesforceExtractType.QUERY
         )
 
-        return TableArtifact(
+        return DataArtifact(
             api_client=self._api_client,
             dag=self._dag,
             artifact_id=output_artifact_id,
@@ -88,7 +88,7 @@ class SalesforceIntegration(Integration):
             object:
                 Object to save to.
         Returns:
-            SaveConfig object to use in TableArtifact.save()
+            SaveConfig object to use in DataArtifact.save()
         """
         return SaveConfig(
             integration_info=self._metadata,

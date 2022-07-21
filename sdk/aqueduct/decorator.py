@@ -9,7 +9,7 @@ from aqueduct.error import AqueductError, InvalidUserActionException
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
 from aqueduct.param_artifact import ParamArtifact
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.table_artifact import DataArtifact
 from aqueduct.utils import (
     CheckFunction,
     MetricFunction,
@@ -21,9 +21,9 @@ from aqueduct.utils import (
 from pandas import DataFrame
 
 # Valid inputs and outputs to our operators.
-OutputArtifact = Union[TableArtifact, MetricArtifact, CheckArtifact]
-InputArtifact = Union[TableArtifact, MetricArtifact, ParamArtifact]
-InputArtifactLocal = Union[TableArtifact, MetricArtifact, ParamArtifact, DataFrame]
+OutputArtifact = Union[DataArtifact, MetricArtifact, CheckArtifact]
+InputArtifact = Union[DataArtifact, MetricArtifact, ParamArtifact]
+InputArtifactLocal = Union[DataArtifact, MetricArtifact, ParamArtifact, DataFrame]
 
 OutputArtifactFunction = Callable[..., OutputArtifact]
 
@@ -39,7 +39,7 @@ DecoratedCheckFunction = Callable[[CheckFunction], OutputArtifactFunction]
 
 def _is_input_artifact(elem: Any) -> bool:
     return (
-        isinstance(elem, TableArtifact)
+        isinstance(elem, DataArtifact)
         or isinstance(elem, MetricArtifact)
         or isinstance(elem, ParamArtifact)
     )
@@ -99,7 +99,7 @@ def wrap_spec(
         )
     elif spec.function:
         artifact_spec = ArtifactSpec(table={})
-        output_artifact = TableArtifact(
+        output_artifact = DataArtifact(
             api_client=api_client, dag=dag, artifact_id=output_artifact_id
         )
     elif spec.check:
@@ -144,7 +144,7 @@ def op(
 ) -> Union[DecoratedFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into an operator.
 
-    Calling the decorated function returns a TableArtifact. The decorated function
+    Calling the decorated function returns a DataArtifact. The decorated function
     can take any number of artifact inputs.
 
     The requirements.txt file in the current directory is used, if it exists.
@@ -175,7 +175,7 @@ def op(
         >>> recent_clicks = db.sql("SELECT * recent_clicks", db="google_analytics/shopping")
         >>> recommendations = compute_recommendations(customer_profiles, recent_clicks)
 
-        `recommendations` is a TableArtifact representing the result of `compute_recommendations()`.
+        `recommendations` is a DataArtifact representing the result of `compute_recommendations()`.
 
         >>> recommendations.get()
     """
@@ -188,7 +188,7 @@ def op(
         if description is None:
             description = func.__doc__ or ""
 
-        def wrapped(*sql_artifacts: TableArtifact) -> TableArtifact:
+        def wrapped(*sql_artifacts: DataArtifact) -> DataArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -210,7 +210,7 @@ def op(
                 op_name=name,
             )
 
-            assert isinstance(new_function_artifact, TableArtifact)
+            assert isinstance(new_function_artifact, DataArtifact)
 
             return new_function_artifact
 

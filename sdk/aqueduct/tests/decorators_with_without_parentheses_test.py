@@ -1,7 +1,7 @@
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.decorator import check, metric, op
 from aqueduct.metric_artifact import MetricArtifact
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.table_artifact import DataArtifact
 from aqueduct.tests.utils import default_table_artifact
 from aqueduct.utils import delete_zip_folder_and_file
 
@@ -42,7 +42,7 @@ def test_decorators_with_without_parentheses():
         "op": {
             w_parentheses: op_fn_with_parentheses,
             wo_parentheses: op_fn_without_parentheses,
-            output_type: TableArtifact,
+            output_type: DataArtifact,
             label: lambda name: f"{name}_aqueduct",
         },
         "metric": {

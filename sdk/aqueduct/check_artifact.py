@@ -10,6 +10,8 @@ from aqueduct.error import AqueductError
 from aqueduct.generic_artifact import Artifact
 from aqueduct.utils import format_header_for_print, get_description_for_check
 
+from sdk.aqueduct.enums import DataType
+
 
 class CheckArtifact(Artifact):
     """This class represents a check within the flow's DAG.
@@ -39,6 +41,25 @@ class CheckArtifact(Artifact):
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
 
+        dag = apply_deltas_to_dag(
+            self._dag,
+            deltas=[
+                SubgraphDAGDelta(
+                    artifact_ids=[self._artifact_id],
+                    include_load_operators=False,
+                )
+            ],
+            make_copy=True,
+        )
+        preview_resp = self._api_client.preview(dag=dag)
+        artifact_result = preview_resp.artifact_results[self._artifact_id]
+
+        if artifact_result.check:
+            self.data_type = DataType.BOOL
+            return artifact_result.check.passed
+        else:
+            raise AqueductError("Unable to parse execution results.")
+
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> bool:
         """Materializes a CheckArtifact into a boolean.
 
@@ -57,10 +78,7 @@ class CheckArtifact(Artifact):
                 SubgraphDAGDelta(
                     artifact_ids=[self._artifact_id],
                     include_load_operators=False,
-                ),
-                UpdateParametersDelta(
-                    parameters=parameters,
-                ),
+                )
             ],
             make_copy=True,
         )

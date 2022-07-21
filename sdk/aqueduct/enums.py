@@ -133,3 +133,15 @@ class ArtifactType(Enum, metaclass=MetaEnum):
     NUMBER = "number"
     BOOL = "boolean"
     PARAM = "param"
+
+class DataType(str, Enum, metaclass=MetaEnum):
+    STRING = "string"
+    BOOL = "boolean"
+    NUMERIC = "numeric"
+    DICT = "dictionary"
+    TUPLE = "tuple"
+    TABULAR = "tabular"
+    JSON = "json"
+    BYTES = "bytes"
+    IMAGE = "image"
+    PICKLABLE = "picklable"

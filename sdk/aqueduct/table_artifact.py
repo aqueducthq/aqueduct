@@ -17,7 +17,7 @@ from aqueduct.dag import (
     UpdateParametersDelta,
     apply_deltas_to_dag,
 )
-from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType, OperatorType
+from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType, OperatorType, DataType
 from aqueduct.error import AqueductError, InvalidIntegrationException
 from aqueduct.generic_artifact import Artifact
 from aqueduct.metric_artifact import MetricArtifact
@@ -53,10 +53,11 @@ from ruamel import yaml
 
 import aqueduct
 
+
 OutputArtifact = Union[MetricArtifact, CheckArtifact]
 
 
-class TableArtifact(Artifact):
+class DataArtifact(Artifact):
     """This class represents a computed table within the flow's DAG.
 
     Any `@op`-annotated python function that returns a dataframe will
@@ -86,8 +87,30 @@ class TableArtifact(Artifact):
         # This parameter indicates whether the artifact is fetched from flow-run or not.
         self._from_flow_run = from_flow_run
 
+    # change to eager execution
+        dag = apply_deltas_to_dag(
+            self._dag,
+            deltas=[
+                SubgraphDAGDelta(
+                    artifact_ids=[self._artifact_id],
+                    include_load_operators=False,
+                ),
+            ],
+            make_copy=True,
+        )
+
+        preview_resp = self._api_client.preview(dag=dag)
+        artifact_result = preview_resp.artifact_results[self._artifact_id]
+
+        if artifact_result.table:
+            # Translate the previewed table in a dataframe.
+            self.data_type = DataType.Tabular
+            return pd.DataFrame(json.loads(artifact_result.table.data)["data"])
+        else:
+            raise AqueductError("Artifact does not have table.")
+
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
-        """Materializes TableArtifact into an actual dataframe.
+        """Materializes DataArtifact into an actual dataframe.
 
         Args:
             parameters:

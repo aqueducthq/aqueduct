@@ -13,7 +13,7 @@ from aqueduct.operators import (
     OperatorSpec,
     SaveConfig,
 )
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.table_artifact import DataArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
 
 
@@ -29,7 +29,7 @@ class GoogleSheetsIntegration(Integration):
 
     def spreadsheet(
         self, spreadsheet_id: str, name: Optional[str] = None, description: str = ""
-    ) -> TableArtifact:
+    ) -> DataArtifact:
         """
         Retrieves a spreadsheet from the Google Sheets integration.
 
@@ -43,7 +43,7 @@ class GoogleSheetsIntegration(Integration):
                 Description of the query.
 
         Returns:
-            TableArtifact representing the Google Sheet.
+            DataArtifact representing the Google Sheet.
         """
         integration_info = self._metadata
 
@@ -81,7 +81,7 @@ class GoogleSheetsIntegration(Integration):
             ],
         )
 
-        return TableArtifact(
+        return DataArtifact(
             api_client=self._api_client,
             dag=self._dag,
             artifact_id=output_artifact_id,
@@ -109,7 +109,7 @@ class GoogleSheetsIntegration(Integration):
                 - CREATE: This will create a new spreadsheet, even if one with the same name exists. The previous
                     spreadsheet will not be deleted, as Google Sheets allows for multiple spreadsheets of the same name.
         Returns:
-            SaveConfig object to use in TableArtifact.save()
+            SaveConfig object to use in DataArtifact.save()
         """
         return SaveConfig(
             integration_info=self._metadata,
