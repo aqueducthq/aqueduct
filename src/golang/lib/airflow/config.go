@@ -7,9 +7,11 @@ import (
 )
 
 type config struct {
-	Host     string `json:"host"  yaml:"host"`
-	Username string `json:"username"  yaml:"username"`
-	Password string `json:"password"  yaml:"password"`
+	Host                 string `json:"host"  yaml:"host"`
+	Username             string `json:"username"  yaml:"username"`
+	Password             string `json:"password"  yaml:"password"`
+	S3CredentialsPath    string `json:"s3_credentials_path"  yaml:"s3CredentialsPath"`
+	S3CredentialsProfile string `json:"s3_credentials_profile"  yaml:"s3CredentialsProfile"`
 }
 
 // parseConfig takes in an auth.Config and parses into a config.
