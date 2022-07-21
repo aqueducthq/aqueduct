@@ -29,7 +29,6 @@ export enum CheckStatus {
   Failed = 'False',
 }
 
-export default ExecutionStatus;
 export const TransitionLengthInMs = 200;
 
 export const WidthTransition = `width ${TransitionLengthInMs}ms ease-in-out`;
@@ -45,3 +44,10 @@ export type Error = {
   context?: string;
   tip?: string;
 };
+
+export default {
+  ContentSidebarOffsetInPx,
+  LoadingStatusEnum,
+  LoadingStatus,
+  ExecutionStatus,
+}

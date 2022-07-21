@@ -24,7 +24,7 @@ import {
   NotificationStatus,
 } from '../../utils/notifications';
 import NotificationsPopover from '../notifications/NotificationsPopover';
-import styles from './menu-sidebar-styles.module.css';
+import * as styles from './menu-sidebar-styles.module.css';
 
 export const MenuSidebarWidth = '200px';
 

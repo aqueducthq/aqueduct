@@ -2,9 +2,22 @@
   "name": "@aqueducthq/common",
   "author": "Aqueduct <hello@aqueducthq.com",
   "version": "0.0.9",
+  "source": "src/index.tsx",
   "main": "dist/index.js",
+  "module": "dist/common.esm.js",
   "types": "dist/index.d.ts",
   "alias": {
+    "react": "./node_modules/react",
+    "react-dom": "./node_modules/react-dom/profiling",
+    "react-dom/client": "./node_modules/react-dom/client",
+    "scheduler/tracing": "./node_modules/scheduler/tracing-profiling",
+    "react-redux": "./node_modules/react-redux",
+    "react-router-dom": "./node_modules/react-router-dom",
+    "@mui/material/styles": "./node_modules/@mui/material/styles",
+    "@mui/base": "./node_modules/@mui/base",
+    "@mui/utils": "./node_modules/@mui/utils",
+    "@mui/system": "./node_modules/@mui/system",
+    "@babel/runtime": "./node_modules/@babel/runtime",
     "process": false
   },
   "files": [
@@ -18,8 +31,8 @@
     "preinstall": "npx force-resolutions",
     "start": "tsdx watch",
     "build": "tsdx build",
+    "build:parcel": "parcel build src/index.tsx --no-cache --no-autoinstall",
     "test": "tsdx test --passWithNoTests",
-    "prepare": "tsdx build",
     "size": "size-limit",
     "analyze": "size-limit --why",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --format table",
@@ -65,7 +78,6 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
-  "module": "dist/common.esm.js",
   "size-limit": [
     {
       "path": "dist/common.cjs.production.min.js",
@@ -78,6 +90,12 @@
   ],
   "devDependencies": {
     "@babel/preset-react": "^7.17.12",
+    "@mui/lab": "*",
+    "@mui/material": "^5.6.2",
+    "@mui/x-data-grid": "^5.10.0",
+    "@parcel/transformer-typescript-tsc": "^2.6.2",
+    "@parcel/transformer-typescript-types": "^2.6.2",
+    "@reduxjs/toolkit": "^1.8.1",
     "@size-limit/preset-small-lib": "^7.0.8",
     "@types/react": "^18.0.8",
     "@types/react-dom": "^18.0.5",
@@ -92,14 +110,19 @@
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "eslint-plugin-unused-imports": "^1.1.5",
     "husky": "^8.0.1",
-    "parcel": "2.6.0",
+    "parcel": "^2.6.2",
+    "parcel-resolver-tspaths": "^0.0.9",
     "prettier": "^2.2.1",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
+    "react-router-dom": "^6.3.0",
     "rollup-plugin-postcss": "^4.0.2",
     "size-limit": "^7.0.8",
     "tsdx": "^0.14.1",
     "tslib": "^2.4.0",
     "typescript": "^3.9.10"
+  },
+  "@parcel/transformer-css": {
+    "cssModules": true
   }
 }

@@ -2,9 +2,14 @@
   // see https://www.typescriptlang.org/tsconfig to better understand tsconfigs
   "include": [
     "src",
-    "types"
+  ],
+  "exclude": [
+    "dist/**/*",
+    "./node_modules/react-router/lib/router.d.ts",
+    "./node_modules/@mui/x-data-grid/utils/createSelector.d.ts"
   ],
   "compilerOptions": {
+    "types": ["node"],
     "target": "es5",
     "lib": [
       "dom",

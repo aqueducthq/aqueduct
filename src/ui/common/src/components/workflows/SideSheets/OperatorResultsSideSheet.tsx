@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 
 import { SelectedNode } from '../../../reducers/nodeSelection';
 import { RootState } from '../../../stores/store';
-import style from '../../../styles/markdown.module.css';
+import * as style from '../../../styles/markdown.module.css';
 import UserProfile from '../../../utils/auth';
 import {
   ExportFunctionStatus,

@@ -4,7 +4,7 @@ import Link from '@mui/material/Link';
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-import style from '../../styles/markdown.module.css';
+import * as style from '../../styles/markdown.module.css';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import { Card } from '../layouts/card';
