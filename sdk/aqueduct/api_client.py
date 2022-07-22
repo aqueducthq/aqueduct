@@ -300,7 +300,7 @@ class APIClient:
             if file:
                 files[str(op.id)] = io.BytesIO(file)
 
-        url = self._construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
+        url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
         resp = requests.post(url, headers=headers, data=body, files=files)
         utils.raise_errors(resp)
 
