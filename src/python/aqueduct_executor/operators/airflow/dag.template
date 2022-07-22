@@ -43,7 +43,7 @@ def handle_function(spec: func_spec.FunctionSpec, run_id: str):
     spec.output_content_paths = ["{}_{}".format(p, run_id) for p in spec.output_content_paths]
     spec.output_metadata_paths = ["{}_{}".format(p, run_id) for p in spec.output_metadata_paths]
 
-    func_execute.run(spec)
+    func_execute.run_with_setup(spec)
 
 
 def handle_extract(spec: conn_spec.ExtractSpec, run_id: str):
