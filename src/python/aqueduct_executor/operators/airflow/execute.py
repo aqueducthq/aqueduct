@@ -1,19 +1,21 @@
-from typing import Union
-import traceback
-import sys
 import os
+import sys
+import traceback
+from typing import Union
 
 from aqueduct_executor.operators.airflow import spec
 from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
 from aqueduct_executor.operators.function_executor import spec as func_spec
 from aqueduct_executor.operators.param_executor import spec as param_spec
 from aqueduct_executor.operators.utils import utils
-from aqueduct_executor.operators.utils.storage import parse
 from aqueduct_executor.operators.utils.execution import ExecutionState, Logs
-
+from aqueduct_executor.operators.utils.storage import parse
 from jinja2 import Environment, FileSystemLoader
 
-TaskSpec = Union[conn_spec.ExtractSpec, conn_spec.LoadSpec, func_spec.FunctionSpec, param_spec.ParamSpec]
+TaskSpec = Union[
+    conn_spec.ExtractSpec, conn_spec.LoadSpec, func_spec.FunctionSpec, param_spec.ParamSpec
+]
+
 
 class Task:
     def __init__(self, task_id: str, spec: TaskSpec, alias: str):
@@ -21,7 +23,8 @@ class Task:
         self.spec = spec
         self.alias = alias
 
-def run(spec: spec.CompileAirflowSpec):
+
+def run(spec: spec.CompileAirflowSpec) -> None:
     """
     Executes a compile airflow operator.
     """
@@ -39,6 +42,7 @@ def run(spec: spec.CompileAirflowSpec):
         traceback.print_exc()
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
+
 
 def compile(spec: spec.CompileAirflowSpec) -> str:
     """
@@ -59,11 +63,11 @@ def compile(spec: spec.CompileAirflowSpec) -> str:
         task_to_alias[task_id] = alias
 
     home = os.environ.get("HOME")
-    path = os.path.join(home, ".aqueduct", "server/bin")
+    path = os.path.join(str(home), ".aqueduct", "server/bin")
     env = Environment(loader=FileSystemLoader(path))
 
-    print('The current working directory is: ', os.getcwd())
-    print('The path is ', path)
+    print("The current working directory is: ", os.getcwd())
+    print("The path is ", path)
 
     template = env.get_template("dag.template")
     r = template.render(
@@ -75,4 +79,3 @@ def compile(spec: spec.CompileAirflowSpec) -> str:
     )
 
     return r
-    

@@ -25,11 +25,10 @@ class CompileAirflowSpec(BaseModel):
     task_edges: Dict[str, List[str]]
 
 
-def parse_spec(spec_json: str) -> CompileAirflowSpec:
+def parse_spec(spec_json: bytes) -> CompileAirflowSpec:
     """
     Parses a JSON string into a CompileAirflowSpec.
     """
     data = json.loads(spec_json)
 
     return parse_obj_as(CompileAirflowSpec, data)
-    

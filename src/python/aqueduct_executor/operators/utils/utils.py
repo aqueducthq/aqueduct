@@ -264,7 +264,8 @@ def write_discover_results(storage: Storage, path: str, tables: List[str]) -> No
 
     storage.put(path, bytes(table_names_str, encoding=_DEFAULT_ENCODING))
 
-def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes):
+
+def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes) -> None:
     """
     Writes the provided Airflow DAG file to storage.
     """

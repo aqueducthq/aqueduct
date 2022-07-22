@@ -1,17 +1,21 @@
 from aqueduct_executor.operators.airflow import execute, spec
-from aqueduct_executor.operators.utils import enums
-from aqueduct_executor.operators.utils.storage import config
-from aqueduct_executor.operators.connectors.tabular import spec as conn_spec, common, extract
+from aqueduct_executor.operators.connectors.tabular import common, extract
+from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
 from aqueduct_executor.operators.function_executor import spec as func_spec
 from aqueduct_executor.operators.param_executor import spec as param_spec
+from aqueduct_executor.operators.utils import enums
+from aqueduct_executor.operators.utils.storage import config
 
-def main():
+
+def main() -> None:
     aspec = spec.CompileAirflowSpec(
         name="test_airflow",
         type=enums.JobType.COMPILE_AIRFLOW,
         storage_config=config.StorageConfig(
-            type=config.StorageType.File, 
-            file_config=config.FileStorageConfig(directory="/Users/saurav/.aqueduct/server/storage"),
+            type=config.StorageType.File,
+            file_config=config.FileStorageConfig(
+                directory="/Users/saurav/.aqueduct/server/storage"
+            ),
         ),
         metadata_path="meta_path",
         output_content_path="airflow_dag.py",
@@ -22,21 +26,22 @@ def main():
                 name="extract",
                 type=enums.JobType.EXTRACT,
                 storage_config=config.StorageConfig(
-                    type=config.StorageType.File, 
-                    file_config=config.FileStorageConfig(directory="/Users/saurav/.aqueduct/server/storage"),
+                    type=config.StorageType.File,
+                    file_config=config.FileStorageConfig(
+                        directory="/Users/saurav/.aqueduct/server/storage"
+                    ),
                 ),
                 metadata_path="extrat_meta",
                 connector_name=common.Name.POSTGRES,
-                connector_config={"conf": {
-                    "username": "user",
-                    "password": "pwd",
-                    "database": "db",
-                    "host": "localhost",
+                connector_config={
+                    "conf": {
+                        "username": "user",
+                        "password": "pwd",
+                        "database": "db",
+                        "host": "localhost",
                     }
                 },
-                parameters=extract.RelationalParams(
-                    query="SELECT * FROM table;"
-                ),
+                parameters=extract.RelationalParams(query="SELECT * FROM table;"),
                 input_param_names=[],
                 input_content_paths=[],
                 input_metadata_paths=[],
@@ -47,8 +52,10 @@ def main():
                 name="func",
                 type=enums.JobType.FUNCTION,
                 storage_config=config.StorageConfig(
-                    type=config.StorageType.File, 
-                    file_config=config.FileStorageConfig(directory="/Users/saurav/.aqueduct/server/storage"),
+                    type=config.StorageType.File,
+                    file_config=config.FileStorageConfig(
+                        directory="/Users/saurav/.aqueduct/server/storage"
+                    ),
                 ),
                 metadata_path="func_metadata",
                 function_path="func_path",
@@ -63,11 +70,12 @@ def main():
                 output_metadata_paths=["output_meta1"],
                 input_artifact_types=[enums.InputArtifactType.TABLE, enums.InputArtifactType.TABLE],
                 output_artifact_types=[enums.OutputArtifactType.TABLE],
-            )
+            ),
         },
-        task_edges={"a": "b"}
+        task_edges={"a": "b"},
     )
     execute.run(aspec)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
