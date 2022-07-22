@@ -117,15 +117,24 @@ if __name__ == "__main__":
         UI_APP_PATH = UI_PATH + "/app"
         
         print("Updating UI files...")
+        print("Cleaning ui/common dependencies ...")
+        execute_command(["rm", "-rf", "node_modules"], cwd=join(cwd, UI_COMMON_PATH))
         execute_command(["rm", "-rf", ".parcel-cache"], cwd=join(cwd, UI_COMMON_PATH))
         execute_command(["rm", "-rf", "dist"], cwd=join(cwd, UI_COMMON_PATH))
+        print("Installing ui/common dependencies ...")
         execute_command(["npm", "install"], cwd=join(cwd, UI_COMMON_PATH))
+        print("Building ui/common bundle ...")
         execute_command(["npm", "run", "build"], cwd=join(cwd, UI_COMMON_PATH))
+        print("Linking ui/common bundle")
         execute_command(["npm", "link"], cwd=join(cwd, UI_COMMON_PATH))
+        print("Cleaning ui/app dependencies ...")
+        execute_command(["rm", "-rf", "node_modules"], cwd=join(cwd, UI_APP_PATH))
         execute_command(["rm", "-rf", ".parcel-cache"], cwd=join(cwd, UI_APP_PATH))
         execute_command(["rm", "-rf", "dist"], cwd=join(cwd, UI_APP_PATH))
+        print("Installing ui/app dependencies ...")
         execute_command(["npm", "install"], cwd=join(cwd, UI_APP_PATH))
         execute_command(["npm", "link", "@aqueducthq/common"], cwd=join(cwd, UI_APP_PATH))
+        print("Building ui/app ...")
         execute_command(["make", "dist"], cwd=join(cwd, "src/ui"))
 
         files = [f for f in listdir(ui_directory) if isfile(join(ui_directory, f))]

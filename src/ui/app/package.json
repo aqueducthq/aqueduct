@@ -59,8 +59,5 @@
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
     "typescript": "^3.9.10"
-  },
-  "parcelIgnore": [
-    "^refractor\/lang\/(?!python.*\\.js$)"
-  ]
+  }
 }
