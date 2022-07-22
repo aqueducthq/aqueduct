@@ -39,6 +39,11 @@ class SnowflakeConfig(models.BaseConfig):
     warehouse: str
     db_schema: Optional[str] = Field("public", alias="schema")  # schema is a Pydantic keyword
 
+    class Config:
+        # Ensures that Pydantic parses JSON keys named "schema" or "db_schema" to
+        # the `db_schema` field
+        allow_population_by_field_name = True
+
 
 class SqlServerConfig(models.BaseConfig):
     username: str
