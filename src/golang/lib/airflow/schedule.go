@@ -14,6 +14,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -40,6 +41,11 @@ func ScheduleWorkflow(
 	workflowDagWriter workflow_dag.Writer,
 ) ([]byte, error) {
 	dagId := generateDagId(dag.Metadata.Name)
+
+	airflowStorageConfig, err := prepareStorageConfig(ctx, dag, storageConfig, vault)
+	if err != nil {
+		return nil, err
+	}
 
 	operatorToTask := make(map[uuid.UUID]string, len(dag.Operators))
 
@@ -126,7 +132,7 @@ func ScheduleWorkflow(
 			nil,
 			jobManager,
 			vault,
-			storageConfig,
+			&airflowStorageConfig,
 			db,
 		)
 		if err != nil {
@@ -217,6 +223,41 @@ func ScheduleWorkflow(
 	}
 
 	return airflowDagFile, nil
+}
+
+// prepareStorageConfig returns the StorageConfig so operators can access storage from the
+// Airflow engine.
+func prepareStorageConfig(
+	ctx context.Context,
+	dag *workflow_dag.DBWorkflowDag,
+	storageConfig *shared.StorageConfig,
+	vault vault.Vault,
+) (shared.StorageConfig, error) {
+	emptyStorageConf := shared.StorageConfig{}
+
+	authConf, err := auth.ReadConfigFromSecret(ctx, dag.EngineConfig.AirflowConfig.IntegrationId, vault)
+	if err != nil {
+		return emptyStorageConf, err
+	}
+
+	airflowConf, err := parseConfig(authConf)
+	if err != nil {
+		return emptyStorageConf, err
+	}
+
+	if storageConfig.Type != shared.S3StorageType {
+		return emptyStorageConf, errors.New("The StorageType must be S3 to use the Airflow engine.")
+	}
+
+	return shared.StorageConfig{
+		Type: storageConfig.Type,
+		S3Config: &shared.S3Config{
+			Region:             storageConfig.S3Config.Region,
+			Bucket:             storageConfig.S3Config.Bucket,
+			CredentialsPath:    airflowConf.S3CredentialsPath,
+			CredentialsProfile: airflowConf.S3CredentialsProfile,
+		},
+	}, nil
 }
 
 func computeEdges(operators map[uuid.UUID]operator_db.DBOperator, operatorToTask map[uuid.UUID]string) (map[string][]string, error) {
