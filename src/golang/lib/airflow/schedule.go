@@ -17,7 +17,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -42,8 +41,6 @@ func ScheduleWorkflow(
 ) ([]byte, error) {
 	dagId := generateDagId(dag.Metadata.Name)
 
-	log.Infof("Dag ID: %v", dagId)
-
 	operatorToTask := make(map[uuid.UUID]string, len(dag.Operators))
 
 	// Generate storage path prefixes for operator metadata, artifact content,
@@ -56,6 +53,7 @@ func ScheduleWorkflow(
 	artifactToMetadataPathPrefix := storagePathPrefixes.ArtifactMetadataPaths
 
 	taskToJobSpec := make(map[string]job.Spec, len(dag.Operators))
+
 	// Generate job spec for each Airflow task
 	for _, op := range dag.Operators {
 		inputArtifacts := make([]artifact.Artifact, 0, len(op.Inputs))
@@ -167,8 +165,6 @@ func ScheduleWorkflow(
 		taskEdges,
 	)
 
-	log.Infof("Job Spec: %v", jobSpec)
-
 	if err := jobManager.Launch(ctx, jobSpec.JobName(), jobSpec); err != nil {
 		return nil, err
 	}
@@ -251,11 +247,9 @@ func computeEdges(operators map[uuid.UUID]operator_db.DBOperator, operatorToTask
 			continue
 		}
 
-		for _, destTask := range destTasks {
-			// There is an implicit edge between `srcTask` and `destTask` via
-			// the artifact `artifactId`.
-			taskEdges[srcTask] = append(taskEdges[srcTask], destTask)
-		}
+		// There is an implicit edge between `srcTask` and each task in `destTasks` via
+		// the artifact `artifactId`.
+		taskEdges[srcTask] = append(taskEdges[srcTask], destTasks...)
 	}
 
 	return taskEdges, nil
