@@ -2,7 +2,8 @@ import json
 import logging
 import os
 import uuid
-from typing import Any, Dict, List, Optional, Union
+from collections import defaultdict
+from typing import Any, DefaultDict, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
@@ -35,6 +36,7 @@ from .integrations.salesforce_integration import SalesforceIntegration
 from .integrations.sql_integration import RelationalDBIntegration
 from .operators import Operator, OperatorSpec, ParamSpec, serialize_parameter_value
 from .param_artifact import ParamArtifact
+from .responses import SavedObjectUpdate
 from .utils import (
     generate_ui_url,
     generate_uuid,

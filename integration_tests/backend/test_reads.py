@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from time import sleep
 
 import pytest
 import requests
@@ -59,7 +60,7 @@ class TestReads:
         r = requests.get(url, headers=headers)
         return r
 
-    def test_endpoint_list_workflow_tables(self):
+    def test_endpoint_list_saved_objects(self):
         endpoint = self.LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE % self.flows["changing_saves.py"]
         data = self.get_response_class(endpoint).json()["object_details"]
 
@@ -76,5 +77,5 @@ class TestReads:
         assert set([(item["object_name"], item["update_mode"]) for item in data]) == data_set
 
         # Check all in same integration
-        assert len(set([item["integration_id"] for item in data])) == 1
+        assert len(set([item["integration_name"] for item in data])) == 1
         assert len(set([item["service"] for item in data])) == 1

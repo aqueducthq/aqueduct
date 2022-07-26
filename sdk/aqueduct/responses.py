@@ -4,7 +4,7 @@ from typing import Dict, List, Optional
 
 from aqueduct.artifact import Artifact
 from aqueduct.dag import Metadata
-from aqueduct.enums import ExecutionStatus, FailureType
+from aqueduct.enums import ExecutionStatus, FailureType, ServiceType
 from aqueduct.operators import Operator
 from aqueduct.utils import human_readable_timestamp
 from pydantic import BaseModel
@@ -220,3 +220,25 @@ class GetWorkflowResponse(BaseModel):
 
     workflow_dags: Dict[uuid.UUID, WorkflowDagResponse]
     workflow_dag_results: List[WorkflowDagResultResponse]
+
+
+class SavedObjectUpdate(BaseModel):
+    """This is an item in the list returned by ListWorkflowSavedObjectsResponse."""
+
+    operator_name: str
+    integration_name: str
+    integration_id: uuid.UUID
+    service: ServiceType
+    object_name: str
+    update_mode: str
+
+
+class ListWorkflowSavedObjectsResponse(BaseModel):
+    """This is the response object returned by api_client.get_workflow_writes().
+
+    Attributes:
+        table_details:
+            List of objects written by the workflow.
+    """
+
+    object_details: List[SavedObjectUpdate]

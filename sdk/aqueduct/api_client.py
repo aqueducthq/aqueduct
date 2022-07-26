@@ -17,6 +17,7 @@ from aqueduct.operators import Operator
 from aqueduct.responses import (
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
+    ListWorkflowSavedObjectsResponse,
     OperatorResult,
     PreviewResponse,
     RegisterWorkflowResponse,
@@ -98,6 +99,7 @@ class APIClient:
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_TABLES_ROUTE = "/api/tables"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
+    LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
     GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact_result/%s/%s"
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
@@ -310,6 +312,14 @@ class APIClient:
         utils.raise_errors(resp)
         workflow_response = GetWorkflowResponse(**resp.json())
         return workflow_response
+
+    def list_saved_objects(self, flow_id: str) -> ListWorkflowSavedObjectsResponse:
+        headers = utils.generate_auth_headers(self.api_key)
+        url = self.construct_full_url(self.LIST_WORKFLOW_SAVED_OBJECTS_ROUTE % flow_id)
+        resp = requests.get(url, headers=headers)
+        utils.raise_errors(resp)
+        workflow_writes_response = ListWorkflowSavedObjectsResponse(**resp.json())
+        return workflow_writes_response
 
     def list_workflows(self) -> List[ListWorkflowResponseEntry]:
         headers = utils.generate_auth_headers(self.api_key)
