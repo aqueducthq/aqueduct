@@ -23,12 +23,12 @@ type EngineConfig struct {
 type AqueductConfig struct{}
 
 type AirflowConfig struct {
-	IntegrationId              uuid.UUID
-	DagId                      string
-	OperatorToTask             map[uuid.UUID]string
-	OperatorMetadataPathPrefix map[uuid.UUID]string
-	ArtifactContentPathPrefix  map[uuid.UUID]string
-	ArtifactMetadataPathPrefix map[uuid.UUID]string
+	IntegrationId              uuid.UUID            `json:"integration_id"  yaml:"integration_id"`
+	DagId                      string               `json:"dag_id"  yaml:"dag_id"`
+	OperatorToTask             map[uuid.UUID]string `json:"operator_to_task"  yaml:"operator_to_task"`
+	OperatorMetadataPathPrefix map[uuid.UUID]string `json:"operator_metadata_path_prefix"  yaml:"operator_metadata_path_prefix"`
+	ArtifactContentPathPrefix  map[uuid.UUID]string `json:"artifact_content_path_prefix"  yaml:"artifact_content_path_prefix"`
+	ArtifactMetadataPathPrefix map[uuid.UUID]string `json:"artifact_metadata_path_prefix"  yaml:"artifact_metadata_path_prefix"`
 }
 
 func (e *EngineConfig) Scan(value interface{}) error {
