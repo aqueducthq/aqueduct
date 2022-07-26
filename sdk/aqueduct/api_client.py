@@ -1,6 +1,7 @@
 import io
 import json
-from typing import IO, Any, Dict, List, Optional, Tuple
+import uuid
+from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
 from aqueduct.dag import DAG
@@ -11,16 +12,18 @@ from aqueduct.error import (
     InternalAqueductError,
     NoConnectedIntegrationsException,
 )
-from aqueduct.integrations.integration import IntegrationInfo
+from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.logger import Logger
 from aqueduct.operators import Operator
 from aqueduct.responses import (
+    DeleteWorkflowResponse,
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
     ListWorkflowSavedObjectsResponse,
     OperatorResult,
     PreviewResponse,
     RegisterWorkflowResponse,
+    SavedObjectUpdate,
 )
 
 from aqueduct import utils
@@ -299,11 +302,25 @@ class APIClient:
         response = requests.post(url, headers=headers, data=body)
         utils.raise_errors(response)
 
-    def delete_workflow(self, flow_id: str) -> None:
+    def delete_workflow(
+        self,
+        flow_id: str,
+        saved_objects_to_delete: DefaultDict[Union[str, Integration], List[SavedObjectUpdate]],
+        force: bool,
+    ) -> DeleteWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
-        response = requests.post(url, headers=headers)
+        body = {
+            "external_delete": {
+                str(integration): [obj.object_name for obj in saved_objects_to_delete[integration]]
+                for integration in saved_objects_to_delete
+            },
+            "force": force,
+        }
+        response = requests.post(url, headers=headers, json=body)
         utils.raise_errors(response)
+        deleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
+        return deleteWorkflowResponse
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
         headers = utils.generate_auth_headers(self.api_key)

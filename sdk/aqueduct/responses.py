@@ -222,6 +222,26 @@ class GetWorkflowResponse(BaseModel):
     workflow_dag_results: List[WorkflowDagResultResponse]
 
 
+class SavedObjectDelete(BaseModel):
+    """This is an item in the list returned by DeleteWorkflowResponse."""
+
+    name: str
+    succeeded: bool
+
+
+class DeleteWorkflowResponse(BaseModel):
+    """This is the response object returned by api_client.delete_workflow().
+
+    Attributes:
+        saved_object_deletion_results:
+            Results of deleting saved objects.
+            Key: Integration name
+            Value: List of SavedObjectDelete belonging to that integration
+    """
+
+    saved_object_deletion_results: Dict[str, List[SavedObjectDelete]]
+
+
 class SavedObjectUpdate(BaseModel):
     """This is an item in the list returned by ListWorkflowSavedObjectsResponse."""
 
