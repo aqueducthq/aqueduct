@@ -5,7 +5,7 @@ from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType
-from aqueduct.error import AqueductError, InvalidUserActionException
+from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
 from aqueduct.param_artifact import ParamArtifact
@@ -140,7 +140,7 @@ def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
-    reqs_path: Optional[str] = None,
+    requirements: Optional[Union[str, List[str]]] = None,
 ) -> Union[DecoratedFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into an operator.
 
@@ -161,6 +161,7 @@ def op(
             A list of relative paths to files that the function needs to access.
             Python classes/methods already imported within the function's file
             need not be included.
+        TODO(kenxu): documentation
         reqs_path:
             A path to file that specifies requirements for this specific operator.
 
@@ -179,6 +180,9 @@ def op(
 
         >>> recommendations.get()
     """
+    # TODO(kenxu): test and flesh this out.
+    if name is not None and not isinstance(name, str):
+        raise InvalidUserArgumentException("Name must be a string.")
 
     def inner_decorator(func: UserFunction) -> OutputArtifactFunction:
         nonlocal name
@@ -197,8 +201,8 @@ def op(
              - python_version.txt
              - <any file dependencies>
             """
-            assert isinstance(name, str)
-            zip_file = serialize_function(func, file_dependencies, reqs_path)
+
+            zip_file = serialize_function(func, file_dependencies, requirements)
             function_spec = FunctionSpec(
                 type=FunctionType.FILE,
                 granularity=FunctionGranularity.TABLE,

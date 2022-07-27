@@ -41,6 +41,7 @@ from .utils import (
     parse_user_supplied_id,
     retention_policy_from_latest_runs,
     schedule_from_cron_string,
+    _infer_requirements,
 )
 
 
@@ -61,6 +62,11 @@ def get_apikey() -> str:
                 "This API works only when you are running the server and the SDK on the same machine."
             )
             exit(1)
+
+
+def infer_requirements() -> List[str]:
+    """TODO(kenxu):"""
+    return _infer_requirements()
 
 
 class Client:
