@@ -10,7 +10,7 @@ from aqueduct.enums import (
     GoogleSheetsSaveMode,
     LoadUpdateMode,
     OperatorType,
-    S3FileFormat,
+    S3TabularFormat,
     SalesforceExtractType,
     ServiceType,
 )
@@ -260,7 +260,7 @@ def test_extract_serialization():
                 integration_id=integration_id,
                 parameters=S3ExtractParams(
                     filepath=json.dumps("test.csv"),
-                    format=S3FileFormat.CSV,
+                    format=S3TabularFormat.CSV,
                 ),
             ),
         ),
@@ -403,7 +403,7 @@ def test_load_serialization():
                 integration_id=integration_id,
                 parameters=S3LoadParams(
                     filepath="test.json",
-                    format=S3FileFormat.JSON,
+                    format=S3TabularFormat.JSON,
                 ),
             ),
         ),
@@ -421,7 +421,7 @@ def test_load_serialization():
                     "integration_id": str(integration_id),
                     "parameters": {
                         "filepath": "test.json",
-                        "format": S3FileFormat.JSON,
+                        "format": S3TabularFormat.JSON,
                     },
                 }
             },

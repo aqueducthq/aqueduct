@@ -20,7 +20,7 @@ class RelationalParams(models.BaseParams):
 
 class S3Params(models.BaseParams):
     filepath: str
-    format: common.S3FileFormat
+    format: common.S3TabularFormat
 
 
 Params = Union[RelationalParams, S3Params]

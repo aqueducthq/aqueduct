@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -96,18 +95,16 @@ type BasePythonSpec struct {
 
 type FunctionSpec struct {
 	BasePythonSpec
-	FunctionPath        string          `json:"function_path"  yaml:"function_path"`
-	FunctionExtractPath string          `json:"function_extract_path" yaml:"function_extract_path"`
-	EntryPointFile      string          `json:"entry_point_file"  yaml:"entry_point_file"`
-	EntryPointClass     string          `json:"entry_point_class"  yaml:"entry_point_class"`
-	EntryPointMethod    string          `json:"entry_point_method"  yaml:"entry_point_method"`
-	CustomArgs          string          `json:"custom_args"  yaml:"custom_args"`
-	InputContentPaths   []string        `json:"input_content_paths"  yaml:"input_content_paths"`
-	InputMetadataPaths  []string        `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
-	OutputContentPaths  []string        `json:"output_content_paths"  yaml:"output_content_paths"`
-	OutputMetadataPaths []string        `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
-	InputArtifactTypes  []artifact.Type `json:"input_artifact_types"  yaml:"input_artifact_types"`
-	OutputArtifactTypes []artifact.Type `json:"output_artifact_types"  yaml:"output_artifact_types"`
+	FunctionPath        string   `json:"function_path"  yaml:"function_path"`
+	FunctionExtractPath string   `json:"function_extract_path" yaml:"function_extract_path"`
+	EntryPointFile      string   `json:"entry_point_file"  yaml:"entry_point_file"`
+	EntryPointClass     string   `json:"entry_point_class"  yaml:"entry_point_class"`
+	EntryPointMethod    string   `json:"entry_point_method"  yaml:"entry_point_method"`
+	CustomArgs          string   `json:"custom_args"  yaml:"custom_args"`
+	InputContentPaths   []string `json:"input_content_paths"  yaml:"input_content_paths"`
+	InputMetadataPaths  []string `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
+	OutputContentPaths  []string `json:"output_content_paths"  yaml:"output_content_paths"`
+	OutputMetadataPaths []string `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
 
 	// If the function outputs a value that exists in this list, we will fail the entire workflow.
 	// This list contains the json-serialized version of the offending values.

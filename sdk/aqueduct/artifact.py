@@ -7,10 +7,7 @@ from pydantic import BaseModel
 
 
 class ArtifactSpec(BaseModel):
-    table: Optional[Dict[Any, Any]]
-    float: Optional[Dict[Any, Any]]
-    bool: Optional[Dict[Any, Any]]
-    jsonable: Optional[Dict[Any, Any]]
+    type: ArtifactType
 
 
 class Artifact(BaseModel):

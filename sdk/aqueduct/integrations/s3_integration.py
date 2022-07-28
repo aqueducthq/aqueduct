@@ -4,7 +4,7 @@ from typing import List, Optional, Union
 from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import S3FileFormat
+from aqueduct.enums import ArtifactType, S3TabularFormat
 from aqueduct.integrations.integration import Integration, IntegrationInfo
 from aqueduct.operators import (
     ExtractSpec,
@@ -14,7 +14,7 @@ from aqueduct.operators import (
     S3LoadParams,
     SaveConfig,
 )
-from aqueduct.table_artifact import TableArtifact
+from aqueduct.untyped_artifact import UntypedArtifact
 from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
 
 
@@ -31,12 +31,14 @@ class S3Integration(Integration):
     def file(
         self,
         filepaths: Union[List[str], str],
-        format: S3FileFormat,
+        artifact_type: ArtifactType,
+        format: Optional[S3TabularFormat] = None,
+        merge: Optional[bool] = None,
         name: Optional[str] = None,
         description: str = "",
-    ) -> TableArtifact:
+    ) -> UntypedArtifact:
         """
-        Retrieves a file from the S3 integration.
+        Retrieves a file or multiple files from the S3 integration.
 
         Args:
             filepaths:
@@ -53,7 +55,7 @@ class S3Integration(Integration):
                 Description of the query.
 
         Returns:
-            TableArtifact representing the S3 File.
+            UntypedArtifact representing the S3 File.
         """
         integration_info = self._metadata
 
@@ -74,7 +76,10 @@ class S3Integration(Integration):
                                 service=integration_info.service,
                                 integration_id=integration_info.id,
                                 parameters=S3ExtractParams(
-                                    filepath=json.dumps(filepaths), format=format
+                                    filepath=json.dumps(filepaths),
+                                    artifact_type=artifact_type,
+                                    format=format,
+                                    merge=merge,
                                 ),
                             )
                         ),
@@ -84,20 +89,20 @@ class S3Integration(Integration):
                         Artifact(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(op_name),
-                            spec=ArtifactSpec(table={}),
+                            spec=ArtifactSpec(type=ArtifactType.UNTYPED),
                         ),
                     ],
                 )
             ],
         )
 
-        return TableArtifact(
+        return UntypedArtifact(
             api_client=self._api_client,
             dag=self._dag,
             artifact_id=output_artifact_id,
         )
 
-    def config(self, filepath: str, format: S3FileFormat) -> SaveConfig:
+    def config(self, filepath: str, format: Optional[S3TabularFormat] = None) -> SaveConfig:
         """
         Configuration for saving to S3 Integration.
 
@@ -107,7 +112,7 @@ class S3Integration(Integration):
             format:
                 S3 Fileformat to save as. Can be CSV, JSON, or Parquet.
         Returns:
-            SaveConfig object to use in TableArtifact.save()
+            SaveConfig object to use in Artifact.save()
         """
         return SaveConfig(
             integration_info=self._metadata,

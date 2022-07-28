@@ -1,13 +1,14 @@
 import json
-from typing import List
+from typing import Any, List
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import common, config, connector, extract, load
 from google.cloud import bigquery
 from google.oauth2 import service_account
+from aqueduct_executor.operators.utils.enums import ArtifactType
 
 
-class BigQueryConnector(connector.TabularConnector):
+class BigQueryConnector(connector.StorageConnector):
     def __init__(self, config: config.BigQueryConfig):
         self.project_id = config.project_id
 
@@ -26,13 +27,16 @@ class BigQueryConnector(connector.TabularConnector):
             all_tables.extend([table.full_table_id.split(":")[-1] for table in tables])
         return all_tables
 
-    def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
+    def extract(self, params: extract.RelationalParams) -> Any:
         assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
         query = self.client.query(params.query)
         df = query.result().to_dataframe()
         return df
 
-    def load(self, params: load.RelationalParams, df: pd.DataFrame) -> None:
+    def load(self, params: load.RelationalParams, df: Any, artifact_type: ArtifactType) -> None:
+        if artifact_type != ArtifactType.TABULAR:
+            raise Exception("The data being loaded must be of type tabular, found %s" % artifact_type)
+            
         update_mode = params.update_mode
         write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE  # Default
         if update_mode == common.UpdateMode.APPEND:

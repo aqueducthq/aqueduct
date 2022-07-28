@@ -24,6 +24,7 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
+from typing import Any
 
 
 def run(spec: Spec) -> None:
@@ -77,7 +78,7 @@ def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
 
 
 def run_authenticate(
-    op: connector.TabularConnector,
+    op: connector.StorageConnector,
     exec_state: ExecutionState,
     is_demo: bool,
 ) -> None:
@@ -91,7 +92,7 @@ def run_authenticate(
 
 
 def run_extract(
-    spec: ExtractSpec, op: connector.TabularConnector, storage: Storage, exec_state: ExecutionState
+    spec: ExtractSpec, op: connector.StorageConnector, storage: Storage, exec_state: ExecutionState
 ) -> None:
     extract_params = spec.parameters
 
@@ -99,11 +100,10 @@ def run_extract(
     # the appropriate values.
     if isinstance(extract_params, extract.RelationalParams):
         assert len(spec.input_param_names) == len(spec.input_content_paths)
-        input_vals = utils.read_artifacts(
+        input_vals, _ = utils.read_artifacts(
             storage,
             spec.input_content_paths,
             spec.input_metadata_paths,
-            [utils.InputArtifactType.JSON] * len(spec.input_content_paths),
         )
         assert all(
             isinstance(param_val, str) for param_val in input_vals
@@ -113,53 +113,61 @@ def run_extract(
         extract_params.expand_placeholders(parameters)
 
     @exec_state.user_fn_redirected(failure_tip=TIP_EXTRACT)
-    def _extract() -> pd.DataFrame:
+    def _extract() -> Any:
         return op.extract(spec.parameters)
 
-    df = _extract()
+    output = _extract()
+
+    output_artifact_type = enums.ArtifactType.TABULAR
+    if isinstance(extract_params, extract.S3Params):
+        output_artifact_type = extract_params.artifact_type
+        # If the type of the output is tuple, then it could be a multi-file S3 request so we
+        # overwrite the output type to tuple.
+        if isinstance(output, tuple):
+            output_artifact_type = enums.ArtifactType.TUPLE
+
     if exec_state.status != enums.ExecutionStatus.FAILED:
-        utils.write_artifacts(
+        utils.write_artifact(
             storage,
-            [utils.OutputArtifactType.TABLE],
-            [spec.output_content_path],
-            [spec.output_metadata_path],
-            [df],
+            output_artifact_type,
+            spec.output_content_path,
+            spec.output_metadata_path,
+            output,
             system_metadata={},
         )
 
 
 def run_load(
-    spec: LoadSpec, op: connector.TabularConnector, storage: Storage, exec_state: ExecutionState
+    spec: LoadSpec, op: connector.StorageConnector, storage: Storage, exec_state: ExecutionState
 ) -> None:
-    inputs = utils.read_artifacts(
+    inputs, input_types = utils.read_artifacts(
         storage,
         [spec.input_content_path],
         [spec.input_metadata_path],
-        [utils.InputArtifactType.TABLE],
     )
     if len(inputs) != 1:
         raise Exception("Expected 1 input artifact, but got %d" % len(inputs))
 
     @exec_state.user_fn_redirected(failure_tip=TIP_LOAD)
     def _load() -> None:
-        op.load(spec.parameters, inputs[0])
+        op.load(spec.parameters, inputs[0], input_types[0])
 
     _load()
 
 
-def run_load_table(spec: LoadTableSpec, op: connector.TabularConnector, storage: Storage) -> None:
+def run_load_table(spec: LoadTableSpec, op: connector.StorageConnector, storage: Storage) -> None:
     df = utils._read_csv(storage, spec.csv)
     op.load(spec.load_parameters.parameters, df)
 
 
-def run_discover(spec: DiscoverSpec, op: connector.TabularConnector, storage: Storage) -> None:
+def run_discover(spec: DiscoverSpec, op: connector.StorageConnector, storage: Storage) -> None:
     tables = op.discover()
     utils.write_discover_results(storage, spec.output_content_path, tables)
 
 
 def setup_connector(
     connector_name: common.Name, connector_config: config.Config
-) -> connector.TabularConnector:
+) -> connector.StorageConnector:
     # prevent isort from moving around type: ignore comments which will cause mypy issues.
     # isort: off
     if connector_name == common.Name.AQUEDUCT_DEMO or connector_name == common.Name.POSTGRES:

@@ -23,7 +23,7 @@ class UpdateMode(Enum, metaclass=enums.MetaEnum):
     FAIL = "fail"
 
 
-class S3FileFormat(Enum, metaclass=enums.MetaEnum):
+class S3TabularFormat(Enum, metaclass=enums.MetaEnum):
     JSON = "JSON"
     CSV = "CSV"
     PARQUET = "Parquet"

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
@@ -264,15 +263,6 @@ func (bfo *baseFunctionOperator) jobSpec(fn *function.Function) job.Spec {
 		}
 	}
 
-	inputArtifactTypes := make([]db_artifact.Type, 0, len(bfo.inputs))
-	outputArtifactTypes := make([]db_artifact.Type, 0, len(bfo.outputs))
-	for _, inputArtifact := range bfo.inputs {
-		inputArtifactTypes = append(inputArtifactTypes, inputArtifact.Type())
-	}
-	for _, outputArtifact := range bfo.outputs {
-		outputArtifactTypes = append(outputArtifactTypes, outputArtifact.Type())
-	}
-
 	return &job.FunctionSpec{
 		BasePythonSpec: job.NewBasePythonSpec(
 			job.FunctionJobType,
@@ -290,7 +280,5 @@ func (bfo *baseFunctionOperator) jobSpec(fn *function.Function) job.Spec {
 		InputMetadataPaths:  bfo.inputMetadataPaths,
 		OutputContentPaths:  bfo.outputContentPaths,
 		OutputMetadataPaths: bfo.outputMetadataPaths,
-		InputArtifactTypes:  inputArtifactTypes,
-		OutputArtifactTypes: outputArtifactTypes,
 	}
 }

@@ -27,8 +27,10 @@ class FunctionSpec(BaseModel):
     input_metadata_paths: List[str]
     output_content_paths: List[str]
     output_metadata_paths: List[str]
-    input_artifact_types: List[enums.InputArtifactType]
-    output_artifact_types: List[enums.OutputArtifactType]
+    # TODO(cgwu): add an operator_type field. We can't rely on the types of input/output artifact to infer the operator type anymore.
+    expected_output_artifact_type: Optional[enums.ArtifactType]
+    #input_artifact_types: List[enums.ArtifactType]
+    #output_artifact_types: List[enums.ArtifactType]
 
     # If the function produces one of these blacklisted outputs exactly,
     # we will error out the workflow.
@@ -36,17 +38,6 @@ class FunctionSpec(BaseModel):
 
     class Config:
         extra = Extra.forbid
-
-    @validator("output_artifact_types")
-    def check_metric_outputs(
-        cls, output_artifact_types: List[enums.OutputArtifactType]
-    ) -> List[enums.OutputArtifactType]:
-        if (
-            len(output_artifact_types) > 1
-            and enums.OutputArtifactType.FLOAT in output_artifact_types
-        ):
-            raise ValueError("A metric operator cannot have multiple outputs.")
-        return output_artifact_types
 
 
 def parse_spec(spec_json: bytes) -> FunctionSpec:

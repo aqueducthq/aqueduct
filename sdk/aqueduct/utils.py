@@ -125,7 +125,7 @@ RESERVED_FILE_NAMES = [
 REQUIREMENTS_FILE = "requirements.txt"
 BLACKLISTED_REQUIREMENTS = "aqueduct"
 
-UserFunction = Callable[..., pd.DataFrame]
+UserFunction = Callable[..., Any]
 MetricFunction = Callable[..., float]
 CheckFunction = Callable[..., bool]
 

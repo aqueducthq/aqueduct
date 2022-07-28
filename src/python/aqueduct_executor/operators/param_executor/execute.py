@@ -23,7 +23,7 @@ def run(spec: ParamSpec) -> None:
     try:
         utils.write_artifact(
             storage,
-            enums.OutputArtifactType.JSON,
+            enums.ArtifactType.JSON,
             spec.output_content_path,
             spec.output_metadata_path,
             spec.val,

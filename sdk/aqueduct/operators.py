@@ -10,9 +10,10 @@ from aqueduct.enums import (
     GoogleSheetsSaveMode,
     LoadUpdateMode,
     OperatorType,
-    S3FileFormat,
+    S3TabularFormat,
     SalesforceExtractType,
     ServiceType,
+    ArtifactType,
 )
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.integrations.integration import IntegrationInfo
@@ -57,7 +58,9 @@ class S3ExtractParams(BaseModel):
     # Note that since we expect the path to be either a string or a list of strings, we need to json
     # serialize the path before we pass it to initialize this field.
     filepath: str
-    format: S3FileFormat
+    artifact_type: ArtifactType
+    format: Optional[S3TabularFormat]
+    merge: Optional[bool]
 
 
 UnionExtractParams = Union[
@@ -90,7 +93,7 @@ class GoogleSheetsLoadParams(BaseModel):
 
 class S3LoadParams(BaseModel):
     filepath: str
-    format: S3FileFormat
+    format: S3TabularFormat
 
 
 UnionLoadParams = Union[

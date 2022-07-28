@@ -4,12 +4,13 @@ from typing import Any, Callable, List, Optional, Union
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import CheckSeverity, FunctionGranularity, FunctionType
+from aqueduct.enums import ArtifactType, CheckSeverity, FunctionGranularity, FunctionType
 from aqueduct.error import AqueductError, InvalidUserActionException
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.operators import CheckSpec, FunctionSpec, MetricSpec, Operator, OperatorSpec
 from aqueduct.param_artifact import ParamArtifact
 from aqueduct.table_artifact import TableArtifact
+from aqueduct.untyped_artifact import UntypedArtifact
 from aqueduct.utils import (
     CheckFunction,
     MetricFunction,
@@ -28,7 +29,7 @@ InputArtifactLocal = Union[TableArtifact, MetricArtifact, ParamArtifact, DataFra
 OutputArtifactFunction = Callable[..., OutputArtifact]
 
 # Type declarations for functions
-DecoratedFunction = Callable[[UserFunction], OutputArtifactFunction]
+DecoratedFunction = Callable[[UserFunction], Callable[..., UntypedArtifact]]
 
 # Type declarations for metrics
 DecoratedMetricFunction = Callable[[MetricFunction], OutputArtifactFunction]
@@ -47,10 +48,10 @@ def _is_input_artifact(elem: Any) -> bool:
 
 def wrap_spec(
     spec: OperatorSpec,
-    *input_artifacts: InputArtifact,
+    *input_artifacts: UntypedArtifact,
     op_name: str,
     description: str = "",
-) -> OutputArtifact:
+) -> UntypedArtifact:
     """Applies a python function to existing artifacts.
     The function must be named predict() on a class named "Function",
     in a file named "model.py":
@@ -90,7 +91,7 @@ def wrap_spec(
     operator_id = generate_uuid()
     output_artifact_id = generate_uuid()
 
-    output_artifact: OutputArtifact
+    output_artifact: UntypedArtifact
 
     if spec.metric:
         artifact_spec = ArtifactSpec(float={})
@@ -98,8 +99,8 @@ def wrap_spec(
             api_client=api_client, dag=dag, artifact_id=output_artifact_id
         )
     elif spec.function:
-        artifact_spec = ArtifactSpec(table={})
-        output_artifact = TableArtifact(
+        artifact_spec = ArtifactSpec(type=ArtifactType.UNTYPED)
+        output_artifact = UntypedArtifact(
             api_client=api_client, dag=dag, artifact_id=output_artifact_id
         )
     elif spec.check:
@@ -144,7 +145,7 @@ def op(
 ) -> Union[DecoratedFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into an operator.
 
-    Calling the decorated function returns a TableArtifact. The decorated function
+    Calling the decorated function returns an UntypedArtifact. The decorated function
     can take any number of artifact inputs.
 
     The requirements.txt file in the current directory is used, if it exists.
@@ -175,7 +176,7 @@ def op(
         >>> recent_clicks = db.sql("SELECT * recent_clicks", db="google_analytics/shopping")
         >>> recommendations = compute_recommendations(customer_profiles, recent_clicks)
 
-        `recommendations` is a TableArtifact representing the result of `compute_recommendations()`.
+        `recommendations` is an UntypedArtifact representing the result of `compute_recommendations()`.
 
         >>> recommendations.get()
     """
@@ -188,7 +189,7 @@ def op(
         if description is None:
             description = func.__doc__ or ""
 
-        def wrapped(*sql_artifacts: TableArtifact) -> TableArtifact:
+        def wrapped(*input_artifacts: UntypedArtifact) -> UntypedArtifact:
             """
             Creates the following files in the zipped folder structure:
              - model.py
@@ -206,11 +207,11 @@ def op(
             )
             new_function_artifact = wrap_spec(
                 OperatorSpec(function=function_spec),
-                *sql_artifacts,
+                *input_artifacts,
                 op_name=name,
             )
 
-            assert isinstance(new_function_artifact, TableArtifact)
+            assert isinstance(new_function_artifact, UntypedArtifact)
 
             return new_function_artifact
 

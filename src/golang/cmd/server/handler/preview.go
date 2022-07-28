@@ -2,11 +2,10 @@ package handler
 
 import (
 	"context"
+	"encoding/base64"
 	"net/http"
-	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/notification"
@@ -19,7 +18,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
@@ -50,28 +48,9 @@ type previewArgs struct {
 	// Add list of IDs
 }
 
-type previewFloatArtifactResponse struct {
-	Val float64 `json:"val"`
-}
-
-type previewBoolArtifactResponse struct {
-	Passed bool `json:"passed"`
-}
-
-type previewParamArtifactResponse struct {
-	Val string `json:"val"`
-}
-
-type previewTableArtifactResponse struct {
-	TableSchema []map[string]string `json:"table_schema"`
-	Data        string              `json:"data"`
-}
-
 type previewArtifactResponse struct {
-	Table  *previewTableArtifactResponse `json:"table"`
-	Metric *previewFloatArtifactResponse `json:"metric"`
-	Check  *previewBoolArtifactResponse  `json:"check"`
-	Param  *previewParamArtifactResponse `json:"param"`
+	SerializationType string `json:"serialization_type"`
+	Content           string `json:"content"`
 }
 
 type previewResponse struct {
@@ -211,11 +190,19 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	artifactResults := make(map[uuid.UUID]previewArtifactResponse)
 	for _, artf := range workflowDag.Artifacts() {
 		if artf.Computed(ctx) {
-			artifactResp, err := convertToPreviewArtifactResponse(ctx, artf)
+			artifact_metadata, err := artf.GetMetadata(ctx)
 			if err != nil {
 				return errorRespPtr, http.StatusInternalServerError, err
 			}
-			artifactResults[artf.ID()] = *artifactResp
+
+			content, err := artf.GetContent(ctx)
+			if err != nil {
+				return errorRespPtr, http.StatusInternalServerError, err
+			}
+			artifactResults[artf.ID()] = previewArtifactResponse{
+				SerializationType: artifact_metadata.SerializationType,
+				Content:           base64.StdEncoding.EncodeToString(content),
+			}
 		}
 	}
 
@@ -224,55 +211,6 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		OperatorResults: execStateByOp,
 		ArtifactResults: artifactResults,
 	}, statusCode, nil
-}
-
-func convertToPreviewArtifactResponse(ctx context.Context, artf artifact.Artifact) (*previewArtifactResponse, error) {
-	content, err := artf.GetContent(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if artf.Type() == db_artifact.FloatType {
-		val, err := strconv.ParseFloat(string(content), 32)
-		if err != nil {
-			return nil, err
-		}
-
-		return &previewArtifactResponse{
-			Metric: &previewFloatArtifactResponse{
-				Val: val,
-			},
-		}, nil
-	} else if artf.Type() == db_artifact.BoolType {
-		passed, err := strconv.ParseBool(string(content))
-		if err != nil {
-			return nil, err
-		}
-
-		return &previewArtifactResponse{
-			Check: &previewBoolArtifactResponse{
-				Passed: passed,
-			},
-		}, nil
-	} else if artf.Type() == db_artifact.JsonType {
-		return &previewArtifactResponse{
-			Param: &previewParamArtifactResponse{
-				Val: string(content),
-			},
-		}, nil
-	} else if artf.Type() == db_artifact.TableType {
-		metadata, err := artf.GetMetadata(ctx)
-		if err != nil {
-			metadata = &artifact_result.Metadata{}
-		}
-		return &previewArtifactResponse{
-			Table: &previewTableArtifactResponse{
-				TableSchema: metadata.Schema,
-				Data:        string(content),
-			},
-		}, nil
-	}
-	return nil, errors.Newf("Unsupported artifact type %s", artf.Type())
 }
 
 func removeLoadOperators(dagSummary *request.DagSummary) {

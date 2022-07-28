@@ -73,7 +73,7 @@ func NewArtifact(
 		id:               dbArtifact.Id,
 		name:             dbArtifact.Name,
 		description:      dbArtifact.Description,
-		artifactType:     dbArtifact.Spec.Type(),
+		artifactType:     dbArtifact.Spec.Type,
 		contentPath:      contentPath,
 		metadataPath:     metadataPath,
 		resultWriter:     artifactResultWriter,

@@ -27,7 +27,7 @@ def run(spec: SystemMetricSpec) -> None:
         system_metadata = utils.read_system_metadata(storage, spec.input_metadata_paths)
         utils.write_artifact(
             storage,
-            enums.OutputArtifactType.FLOAT,
+            enums.ArtifactType.FLOAT,
             spec.output_content_path,
             spec.output_metadata_path,
             float(system_metadata[0][spec.metric_name]),
