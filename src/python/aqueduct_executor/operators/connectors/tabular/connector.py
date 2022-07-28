@@ -3,6 +3,7 @@ from typing import List
 
 import pandas as pd
 from aqueduct_executor.operators.connectors.tabular import extract, load
+from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 
 
 class TabularConnector(ABC):
@@ -31,6 +32,18 @@ class TabularConnector(ABC):
 
         Returns:
             A DataFrame that contains the data extracted by the connector.
+        """
+
+    @abstractmethod
+    def delete(  # type: ignore
+        self,
+        # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
+        objects,  # List[str]
+    ) -> List[SavedObjectDelete]:
+        """Delete objects from integration.
+
+        Args:
+            objects: List of objects to delete from this integration.
         """
 
     @abstractmethod

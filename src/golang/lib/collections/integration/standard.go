@@ -132,6 +132,28 @@ func (r *standardReaderImpl) GetIntegrationsByUser(
 	return integrations, err
 }
 
+func (r *standardReaderImpl) GetIntegrationByNameAndUser(
+	ctx context.Context,
+	integrationName string,
+	userId uuid.UUID,
+	organizationId string,
+	db database.Database,
+) (*Integration, error) {
+	getIntegrationsQuery := fmt.Sprintf(
+		"SELECT %s FROM integration WHERE name=$1 AND organization_id = $2 AND (user_id IS NULL OR user_id = $3);",
+		allColumns(),
+	)
+	var integrations []Integration
+
+	err := db.Query(ctx, &integrations, getIntegrationsQuery, integrationName, organizationId, userId)
+
+	if len(integrations) != 1 {
+		return nil, errors.Newf("Wrong number of integrations fetched")
+	}
+
+	return &integrations[0], err
+}
+
 func (r *standardReaderImpl) GetIntegrationsByServiceAndUser(
 	ctx context.Context,
 	service Service,

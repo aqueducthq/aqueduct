@@ -36,16 +36,17 @@ const (
 )
 
 const (
-	WorkflowJobType       JobType = "workflow"
-	FunctionJobType       JobType = "function"
-	ParamJobType          JobType = "param"
-	SystemMetricJobType   JobType = "system_metric"
-	AuthenticateJobType   JobType = "authenticate"
-	ExtractJobType        JobType = "extract"
-	LoadJobType           JobType = "load"
-	LoadTableJobType      JobType = "load-table"
-	DiscoverJobType       JobType = "discover"
-	WorkflowRetentionType JobType = "workflow_retention"
+	WorkflowJobType           JobType = "workflow"
+	FunctionJobType           JobType = "function"
+	ParamJobType              JobType = "param"
+	SystemMetricJobType       JobType = "system_metric"
+	AuthenticateJobType       JobType = "authenticate"
+	ExtractJobType            JobType = "extract"
+	LoadJobType               JobType = "load"
+	LoadTableJobType          JobType = "load-table"
+	DeleteSavedObjectsJobType JobType = "delete-saved-objects"
+	DiscoverJobType           JobType = "discover"
+	WorkflowRetentionType     JobType = "workflow_retention"
 )
 
 // `ExecutorConfiguration` represents the configuration variables that are
@@ -144,6 +145,14 @@ type ExtractSpec struct {
 	OutputMetadataPath string   `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
+type DeleteSavedObjectsSpec struct {
+	BasePythonSpec
+	ConnectorName     map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig   map[string]auth.Config         `json:"connector_config"  yaml:"connector_config"`
+	Parameters        map[string][]string            `json:"parameters"  yaml:"parameters"`
+	OutputContentPath string                         `json:"output_content_path"  yaml:"output_content_path"`
+}
+
 type LoadSpec struct {
 	BasePythonSpec
 	ConnectorName     integration.Service  `json:"connector_name"  yaml:"connector_name"`
@@ -208,6 +217,10 @@ func (*LoadSpec) Type() JobType {
 
 func (*LoadTableSpec) Type() JobType {
 	return LoadTableJobType
+}
+
+func (*DeleteSavedObjectsSpec) Type() JobType {
+	return DeleteSavedObjectsJobType
 }
 
 func (*DiscoverSpec) Type() JobType {
@@ -328,6 +341,32 @@ func NewExtractSpec(
 		Parameters:         parameters,
 		OutputContentPath:  outputContentPath,
 		OutputMetadataPath: outputMetadataPath,
+	}
+}
+
+// NewDeleteSavedObjectsSpec constructs a Spec for a DeleteWrittenObjectsJob.
+func NewDeleteSavedObjectsSpec(
+	name string,
+	storageConfig *shared.StorageConfig,
+	metadataPath string,
+	connectorName map[string]integration.Service,
+	connectorConfig map[string]auth.Config,
+	parameters map[string][]string,
+	outputContentPath string,
+) Spec {
+	return &DeleteSavedObjectsSpec{
+		BasePythonSpec: BasePythonSpec{
+			BaseSpec: BaseSpec{
+				Type: DeleteSavedObjectsJobType,
+				Name: name,
+			},
+			StorageConfig: *storageConfig,
+			MetadataPath:  metadataPath,
+		},
+		ConnectorName:     connectorName,
+		ConnectorConfig:   connectorConfig,
+		Parameters:        parameters,
+		OutputContentPath: outputContentPath,
 	}
 }
 

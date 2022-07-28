@@ -60,6 +60,13 @@ type Reader interface {
 		organizationId string,
 		db database.Database,
 	) (bool, error)
+	GetIntegrationByNameAndUser(
+		ctx context.Context,
+		integrationName string,
+		userId uuid.UUID,
+		organizationId string,
+		db database.Database,
+	) (*Integration, error)
 }
 
 type Writer interface {
