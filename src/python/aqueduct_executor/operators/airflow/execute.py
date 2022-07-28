@@ -1,7 +1,7 @@
 import os
 import sys
 import traceback
-from typing import Union
+from typing import Dict, List, Tuple, Union
 
 from aqueduct_executor.operators.airflow import spec
 from aqueduct_executor.operators.connectors.tabular import spec as conn_spec
@@ -61,21 +61,34 @@ def compile(spec: spec.CompileAirflowSpec) -> str:
         i += 1
 
         task_to_alias[task_id] = alias
+    
+    edges = flatten_task_edges(spec.task_edges)
 
     home = os.environ.get("HOME")
     path = os.path.join(str(home), ".aqueduct", "server/bin")
     env = Environment(loader=FileSystemLoader(path))
-
-    print("The current working directory is: ", os.getcwd())
-    print("The path is ", path)
 
     template = env.get_template("dag.template")
     r = template.render(
         dag_id=spec.dag_id,
         schedule=spec.cron_schedule,
         tasks=tasks,
-        edges=spec.task_edges,
+        edges=edges,
         task_to_alias=task_to_alias,
     )
 
     return r
+
+
+def flatten_task_edges(edges: Dict[str, List[str]]) -> List[Tuple[str, str]]:
+    """
+    Takes a map of tasks to a list of tasks representing edges and flattens
+    it into a list of tuples.
+    """
+    edges = []
+
+    for src, dests in edges.items():
+        for dest in dests:
+            edges.append((src, dest))
+    
+    return edges

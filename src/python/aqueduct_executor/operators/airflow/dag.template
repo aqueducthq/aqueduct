@@ -101,8 +101,6 @@ with DAG(
     )
     {% endfor %}
 
-{% for src, dests in edges.items() %}
-    {% for dest in dests %}
-        {{ task_to_alias[src] }}.set_downstream({{ task_to_alias[dests] }})
-    {% endfor %}
+{% for edge in edges %}
+    {{ task_to_alias[edge[0]] }}.set_downstream({{ task_to_alias[edge[1]] }})
 {% endfor %}
