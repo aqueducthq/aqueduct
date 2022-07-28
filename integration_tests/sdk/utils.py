@@ -1,6 +1,7 @@
 import time
 import uuid
 from typing import Dict, List, Optional, Union
+import requests
 
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.enums import ExecutionStatus
@@ -192,3 +193,11 @@ def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
         print("Error deleting workflow %s with exception %s" % (workflow_id, e))
     else:
         print("Successfully deleted workflow %s" % (workflow_id))
+
+
+def get_response(client, endpoint, additional_headers={}):
+    headers = {"api-key": client._api_client.api_key}
+    headers.update(additional_headers)
+    url = client._api_client.construct_full_url(endpoint)
+    r = requests.get(url, headers=headers)
+    return r
