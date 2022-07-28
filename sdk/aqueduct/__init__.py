@@ -2,7 +2,7 @@ from typing import Any, List
 
 from aqueduct.aqueduct_client import Client, get_apikey
 from aqueduct.constants import exports
-from aqueduct.decorator import check, metric, op
+from aqueduct.decorator import check, metric, op, to_operator
 from aqueduct.enums import CheckSeverity, LoadUpdateMode
 from aqueduct.flow import Flow
 from aqueduct.schedule import DayOfMonth, DayOfWeek, Hour, Minute, daily, hourly, monthly, weekly
