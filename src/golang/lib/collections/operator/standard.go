@@ -18,11 +18,12 @@ type standardReaderImpl struct{}
 type standardWriterImpl struct{}
 
 type GetDistinctLoadOperatorsByWorkflowIdResponse struct {
-	Name           string              `db:"name" json:"name"`
-	Integration_id uuid.UUID           `db:"integration_id" json:"integration_id"`
-	Service        integration.Service `db:"service" json:"service"`
-	Table_name     string              `db:"table_name" json:"object_name"`
-	Update_mode    string              `db:"update_mode" json:"update_mode"`
+	OperatorName    string              `db:"operator_name" json:"operator_name"`
+	IntegrationName string              `db:"integration_name" json:"integration_name"`
+	Integration_id  uuid.UUID           `db:"integration_id" json:"integration_id"`
+	Service         integration.Service `db:"service" json:"service"`
+	TableName       string              `db:"table_name" json:"object_name"`
+	UpdateMode      string              `db:"update_mode" json:"update_mode"`
 }
 
 func (w *standardWriterImpl) CreateOperator(
