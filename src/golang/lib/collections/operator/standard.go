@@ -21,7 +21,7 @@ type GetDistinctLoadOperatorsByWorkflowIdResponse struct {
 	Name           string              `db:"name" json:"name"`
 	Integration_id uuid.UUID           `db:"integration_id" json:"integration_id"`
 	Service        integration.Service `db:"service" json:"service"`
-	Table_name     string              `db:"table_name" json:"table_name"`
+	Table_name     string              `db:"table_name" json:"object_name"`
 	Update_mode    string              `db:"update_mode" json:"update_mode"`
 }
 

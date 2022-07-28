@@ -19,17 +19,6 @@ integration = client.integration(name="aqueduct_demo")
 
 table = integration.sql(query="SELECT * FROM wine;")
 
-table.save(integration.config(table="table_1", update_mode="append"))
-
-flow = client.publish_flow(
-    name=name,
-    artifacts=[table],
-)
-
-###
-
-table = integration.sql(query="SELECT * FROM wine;")
-
 table.save(integration.config(table="table_1", update_mode="replace"))
 
 flow = client.publish_flow(
@@ -52,7 +41,7 @@ flow = client.publish_flow(
 
 table = integration.sql(query="SELECT * FROM wine;")
 
-table.save(integration.config(table="table_2", update_mode="append"))
+table.save(integration.config(table="table_1", update_mode="append"))
 
 flow = client.publish_flow(
     name=name,
@@ -61,4 +50,15 @@ flow = client.publish_flow(
 
 ###
 
-print(flow.id())
+table = integration.sql(query="SELECT * FROM wine;")
+
+table.save(integration.config(table="table_2", update_mode="replace"))
+
+flow = client.publish_flow(
+    name=name,
+    artifacts=[table],
+)
+
+###
+
+print(flow.id(), 4)

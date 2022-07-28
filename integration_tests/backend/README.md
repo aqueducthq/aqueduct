@@ -11,7 +11,7 @@ import sys
 api_key, server_address = sys.argv[1], sys.argv[2]
 ```
 After that, you can write a workflow as you would do as a typical user.
-At the very end, the tests **require** you to print the flow id (e.g. `print(flow.id())`). This is parsed by the suite setup function and saved to a list of flow ids. At the end of testing, the teardown function will iterate through the flow ids and delete the associated workflows.
+At the very end, the tests **require** you to print the flow id and number of flow runs(e.g. `print(flow.id(), n_runs)`). This is parsed by the suite setup function and saved to a list of flow ids. At the end of testing, the teardown function will iterate through the flow ids and delete the associated workflows.
 
 ## Usage
 

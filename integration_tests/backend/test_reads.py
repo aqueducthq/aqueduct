@@ -5,12 +5,13 @@ from pathlib import Path
 
 import pytest
 import requests
+import utils
 
 import aqueduct
 
 
-class TestBackend:
-    GET_WORKFLOW_TABLES_TEMPLATE = "/api/workflow/%s/tables"
+class TestReads:
+    LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
     WORKFLOW_PATH = Path(__file__).parent / "setup"
 
     @classmethod
@@ -40,12 +41,15 @@ class TestBackend:
             if err:
                 raise Exception(f"Could not run workflow {workflow}.\n\n{err}")
             else:
-                cls.flows[workflow] = out.strip().split()[-1]
+                parsed = out.strip().split()
+                cls.flows[workflow] = parsed[-2]
+                n_runs = int(parsed[-1])
+                utils.wait_for_flow_runs(cls.client, cls.flows[workflow], n_runs)
 
     @classmethod
     def teardown_class(cls):
         for flow in cls.flows:
-            cls.client.delete_flow(cls.flows[flow])
+            utils.delete_flow(cls.client, cls.flows[flow])
 
     @classmethod
     def get_response_class(cls, endpoint, additional_headers={}):
@@ -55,9 +59,9 @@ class TestBackend:
         r = requests.get(url, headers=headers)
         return r
 
-    def test_endpoint_getworkflowtables(self):
-        endpoint = self.GET_WORKFLOW_TABLES_TEMPLATE % self.flows["changing_saves.py"]
-        data = self.get_response_class(endpoint).json()["table_details"]
+    def test_endpoint_list_workflow_tables(self):
+        endpoint = self.LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE % self.flows["changing_saves.py"]
+        data = self.get_response_class(endpoint).json()["object_details"]
 
         assert len(data) == 3
 
@@ -66,10 +70,10 @@ class TestBackend:
             [
                 ("table_1", "append"),
                 ("table_1", "replace"),
-                ("table_2", "append"),
+                ("table_2", "replace"),
             ]
         )
-        assert set([(item["table_name"], item["update_mode"]) for item in data]) == data_set
+        assert set([(item["object_name"], item["update_mode"]) for item in data]) == data_set
 
         # Check all in same integration
         assert len(set([item["integration_id"] for item in data])) == 1
