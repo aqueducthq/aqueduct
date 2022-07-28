@@ -224,9 +224,9 @@ type baseFunctionOperator struct {
 
 func (bfo *baseFunctionOperator) Finish(ctx context.Context) {
 	// If the operator was not persisted to the DB, cleanup the serialized function.
-	if !bfo.resultsPersisted {
-		utils.CleanupStorageFile(ctx, bfo.storageConfig, bfo.dbOperator.Spec.Function().StoragePath)
-	}
+	//if !bfo.resultsPersisted {
+	//utils.CleanupStorageFile(ctx, bfo.storageConfig, bfo.dbOperator.Spec.Function().StoragePath)
+	//}
 
 	bfo.baseOperator.Finish(ctx)
 }

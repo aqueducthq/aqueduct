@@ -23,5 +23,5 @@ if __name__ == "__main__":
         raise
 
     # The output of the print statement to stdout is captured by the calling bash script into a variable,
-    # so we should not include any other print statements in this Python script.
+    # so we should not include any other happy-path print statements in this Python script.
     print(run(spec))

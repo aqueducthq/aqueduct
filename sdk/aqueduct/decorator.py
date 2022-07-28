@@ -181,8 +181,8 @@ def op(
         >>> recommendations.get()
     """
     # TODO(kenxu): test and flesh this out.
-    if name is not None and not isinstance(name, str):
-        raise InvalidUserArgumentException("Name must be a string.")
+    # if name is not None and not isinstance(name, str):
+    #     raise InvalidUserArgumentException("Name must be a string.")
 
     def inner_decorator(func: UserFunction) -> OutputArtifactFunction:
         nonlocal name
