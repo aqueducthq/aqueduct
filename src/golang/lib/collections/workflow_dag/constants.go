@@ -24,6 +24,7 @@ func allColumns() string {
 			WorkflowIdColumn,
 			CreatedAtColumn,
 			StorageConfigColumn,
+			EngineConfigColumn,
 		},
 		",",
 	)
@@ -37,6 +38,7 @@ func allColumnsWithPrefix() string {
 			fmt.Sprintf("%s.%s", tableName, WorkflowIdColumn),
 			fmt.Sprintf("%s.%s", tableName, CreatedAtColumn),
 			fmt.Sprintf("%s.%s", tableName, StorageConfigColumn),
+			fmt.Sprintf("%s.%s", tableName, EngineConfigColumn),
 		},
 		",",
 	)

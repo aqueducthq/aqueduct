@@ -71,10 +71,12 @@ func ParseDagSummaryFromRequest(
 
 	workflowDag.Metadata.UserId = userId
 
-	// The default engine config for now is Aqueduct
-	workflowDag.EngineConfig = shared.EngineConfig{
-		Type:           shared.AqueductEngineType,
-		AqueductConfig: &shared.AqueductConfig{},
+	if workflowDag.EngineConfig.Type == "" {
+		// The default engine config for now is Aqueduct
+		workflowDag.EngineConfig = shared.EngineConfig{
+			Type:           shared.AqueductEngineType,
+			AqueductConfig: &shared.AqueductConfig{},
+		}
 	}
 
 	return &DagSummary{
