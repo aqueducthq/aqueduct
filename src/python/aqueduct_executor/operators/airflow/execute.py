@@ -85,10 +85,10 @@ def flatten_task_edges(edges: Dict[str, List[str]]) -> List[Tuple[str, str]]:
     Takes a map of tasks to a list of tasks representing edges and flattens
     it into a list of tuples.
     """
-    edges = []
+    pairs = []
 
     for src, dests in edges.items():
         for dest in dests:
-            edges.append((src, dest))
+            pairs.append((src, dest))
     
-    return edges
+    return pairs
