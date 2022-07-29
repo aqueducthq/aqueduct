@@ -56,11 +56,11 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
     # Invoke the function and parse out the result object.
 
     try:
-        logging.INFO("CWD is: ", os.getcwd())
-        logging.INFO("Trying to import module at: ", import_path)
+        logging.info("CWD is: ", os.getcwd())
+        logging.info("Trying to import module at: ", import_path)
         module = importlib.import_module(import_path)
     except Exception as e:
-        logging.ERROR("Unable to import module: ", e)
+        logging.error("Unable to import module: ", e)
 
     if not class_name:
         return getattr(module, method_name)  # type: ignore
