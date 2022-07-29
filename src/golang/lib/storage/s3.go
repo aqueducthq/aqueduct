@@ -8,6 +8,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -39,7 +40,6 @@ func (s *s3Storage) parseBucketAndKey(key string) (string, string, error) {
 }
 
 func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
-	// TODO(ENG-1368): throw an `ErrObjectDoesNotExist` error if the is not present in S3.
 	sess, err := CreateS3Session(s.s3Config)
 	if err != nil {
 		return nil, err
@@ -61,6 +61,13 @@ func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
 			Key:    aws.String(key),
 		})
 	if err != nil {
+		// Cast `err` to an AWS error to check code
+		if aerr, ok := err.(awserr.Error); ok {
+			if aerr.Code() == s3.ErrCodeNoSuchKey {
+				return nil, ErrObjectDoesNotExist
+			}
+		}
+
 		return nil, err
 	}
 	return buff.Bytes(), nil
