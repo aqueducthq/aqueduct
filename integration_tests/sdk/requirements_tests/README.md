@@ -5,3 +5,5 @@ To run, you must set the `--requirements` flag in your pytest command (every tes
 ```
 API_KEY=<API_KEY> INTEGRATION=<INTEGRATION> SERVER_ADDRESS=<ADDRESS> pytest ./requirements_tests -rP --requirements 
 ```
+
+Becuase each of these tests will uninstall and reinstall a python package, there *cannot be any parallelism* when running these tests.
