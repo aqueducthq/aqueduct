@@ -1,5 +1,6 @@
 import importlib
 import json
+import logging
 import os
 import sys
 import tracemalloc
@@ -53,7 +54,14 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., DataFrame]:
     method_name = spec.entry_point_method
     custom_args_str = spec.custom_args
     # Invoke the function and parse out the result object.
-    module = importlib.import_module(import_path)
+
+    try:
+        logging.INFO("CWD is: ", os.getcwd())
+        logging.INFO("Trying to import module at: ", import_path)
+        module = importlib.import_module(import_path)
+    except Exception as e:
+        logging.ERROR("Unable to import module: ", e)
+
     if not class_name:
         return getattr(module, method_name)  # type: ignore
 
