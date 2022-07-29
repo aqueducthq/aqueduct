@@ -20,6 +20,8 @@ from aqueduct.utils import (
 )
 from pandas import DataFrame
 
+from aqueduct import dag as dag_module
+
 # Valid inputs and outputs to our operators.
 OutputArtifact = Union[TableArtifact, MetricArtifact, CheckArtifact]
 InputArtifact = Union[TableArtifact, MetricArtifact, ParamArtifact]
@@ -71,17 +73,13 @@ def wrap_spec(
         description:
             The description for this operator.
     """
-    if len(input_artifacts) < 1:
-        raise Exception("Transformation requires at least one input artifact.")
-
     for artifact in input_artifacts:
         if artifact._from_flow_run:
             raise InvalidUserActionException(
                 "Artifact fetched from flow run can not be reused for computation"
             )
 
-    dag = input_artifacts[0]._dag
-    api_client = input_artifacts[0]._api_client
+    dag = dag_module.__GLOBAL_DAG__
 
     # Check that all the artifact ids exist in the dag.
     for artifact in input_artifacts:
@@ -94,19 +92,13 @@ def wrap_spec(
 
     if spec.metric:
         artifact_spec = ArtifactSpec(float={})
-        output_artifact = MetricArtifact(
-            api_client=api_client, dag=dag, artifact_id=output_artifact_id
-        )
+        output_artifact = MetricArtifact(dag=dag, artifact_id=output_artifact_id)
     elif spec.function:
         artifact_spec = ArtifactSpec(table={})
-        output_artifact = TableArtifact(
-            api_client=api_client, dag=dag, artifact_id=output_artifact_id
-        )
+        output_artifact = TableArtifact(dag=dag, artifact_id=output_artifact_id)
     elif spec.check:
         artifact_spec = ArtifactSpec(bool={})
-        output_artifact = CheckArtifact(
-            api_client=api_client, dag=dag, artifact_id=output_artifact_id
-        )
+        output_artifact = CheckArtifact(dag=dag, artifact_id=output_artifact_id)
     else:
         raise AqueductError("Operator spec not supported.")
 

@@ -8,7 +8,8 @@ import __main__ as main
 import yaml
 from aqueduct.generic_artifact import Artifact as GenericArtifact
 
-from .api_client import APIClient
+from aqueduct import api_client, dag
+
 from .artifact import Artifact, ArtifactSpec
 from .dag import (
     DAG,
@@ -87,11 +88,11 @@ class Client:
             A Client instance.
         """
         logging.basicConfig(level=log_level)
-        self._api_client = APIClient(api_key, aqueduct_address)
+        api_client.__GLOBAL_API_CLIENT__.configure(api_key, aqueduct_address)
         self._connected_integrations: Dict[
             str, IntegrationInfo
-        ] = self._api_client.list_integrations()
-        self._dag = DAG(metadata=Metadata())
+        ] = api_client.__GLOBAL_API_CLIENT__.list_integrations()
+        self._dag = dag.__GLOBAL_DAG__
 
         # Will show graph if in an ipynb or Python console, but not if running a Python script.
         self._in_notebook_or_console_context = (not hasattr(main, "__file__")) and (
@@ -114,7 +115,7 @@ class Client:
             A github integration object linked to the repo and branch.
 
         """
-        return Github(client=self._api_client, repo_url=repo, branch=branch)
+        return Github(repo_url=repo, branch=branch)
 
     def create_param(self, name: str, default: Any, description: str = "") -> ParamArtifact:
         """Creates a parameter artifact that can be fed into other operators.
@@ -163,7 +164,6 @@ class Client:
             ],
         )
         return ParamArtifact(
-            self._api_client,
             self._dag,
             output_artifact_id,
         )
@@ -174,7 +174,7 @@ class Client:
         Returns:
             A dictionary mapping from integration name to additional info.
         """
-        self._connected_integrations = self._api_client.list_integrations()
+        self._connected_integrations = api_client.__GLOBAL_API_CLIENT__.list_integrations()
         return self._connected_integrations
 
     def integration(
@@ -206,25 +206,21 @@ class Client:
         integration_info = self._connected_integrations[name]
         if integration_info.service in RelationalDBServices:
             return RelationalDBIntegration(
-                api_client=self._api_client,
                 dag=self._dag,
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.SALESFORCE:
             return SalesforceIntegration(
-                api_client=self._api_client,
                 dag=self._dag,
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.GOOGLE_SHEETS:
             return GoogleSheetsIntegration(
-                api_client=self._api_client,
                 dag=self._dag,
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.S3:
             return S3Integration(
-                api_client=self._api_client,
                 dag=self._dag,
                 metadata=integration_info,
             )
@@ -243,7 +239,8 @@ class Client:
             the flow further in the UI or SDK.
         """
         return [
-            workflow_resp.to_readable_dict() for workflow_resp in self._api_client.list_workflows()
+            workflow_resp.to_readable_dict()
+            for workflow_resp in api_client.__GLOBAL_API_CLIENT__.list_workflows()
         ]
 
     def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
@@ -259,11 +256,13 @@ class Client:
         """
         flow_id = parse_user_supplied_id(flow_id)
 
-        if all(uuid.UUID(flow_id) != workflow.id for workflow in self._api_client.list_workflows()):
+        if all(
+            uuid.UUID(flow_id) != workflow.id
+            for workflow in api_client.__GLOBAL_API_CLIENT__.list_workflows()
+        ):
             raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
 
         return Flow(
-            self._api_client,
             flow_id,
             self._in_notebook_or_console_context,
         )
@@ -334,16 +333,15 @@ class Client:
             retention_policy=retention_policy,
         )
 
-        flow_id = self._api_client.register_workflow(dag).id
+        flow_id = api_client.__GLOBAL_API_CLIENT__.register_workflow(dag).id
 
         url = generate_ui_url(
-            self._api_client.construct_base_url(),
+            api_client.__GLOBAL_API_CLIENT__.construct_base_url(),
             str(flow_id),
         )
         print("Url: ", url)
 
         return Flow(
-            self._api_client,
             str(flow_id),
             self._in_notebook_or_console_context,
         )
@@ -393,7 +391,7 @@ class Client:
             )
 
         flow_id = parse_user_supplied_id(flow_id)
-        self._api_client.refresh_workflow(flow_id, serialized_params)
+        api_client.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, serialized_params)
 
     def delete_flow(self, flow_id: Union[str, uuid.UUID]) -> None:
         """Deletes a flow object.
@@ -413,7 +411,7 @@ class Client:
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
-        self._api_client.delete_workflow(flow_id)
+        api_client.__GLOBAL_API_CLIENT__.delete_workflow(flow_id)
 
     def show_dag(self, artifacts: Optional[List[GenericArtifact]] = None) -> None:
         """Prints out the flow as a pyplot graph.
@@ -439,14 +437,14 @@ class Client:
                 ],
                 make_copy=True,
             )
-        _show_dag(self._api_client, dag)
+        _show_dag(dag)
 
     def describe(self) -> None:
         """Prints out info about this client in a human-readable format."""
         print("============================= Aqueduct Client =============================")
-        print("Connected endpoint: %s" % self._api_client.aqueduct_address)
+        print("Connected endpoint: %s" % api_client.__GLOBAL_API_CLIENT__.aqueduct_address)
         print("Log Level: %s" % logging.getLevelName(logging.root.level))
-        self._connected_integrations = self._api_client.list_integrations()
+        self._connected_integrations = api_client.__GLOBAL_API_CLIENT__.list_integrations()
         print("Current Integrations:")
         for integrations in self._connected_integrations:
             print("\t -" + integrations)

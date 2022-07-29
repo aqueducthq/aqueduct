@@ -1,6 +1,5 @@
 from typing import Optional
 
-from aqueduct.api_client import APIClient
 from aqueduct.artifact import Artifact, ArtifactSpec
 from aqueduct.dag import DAG, AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.enums import GoogleSheetsSaveMode
@@ -22,8 +21,7 @@ class GoogleSheetsIntegration(Integration):
     Class for Google Sheets integration.
     """
 
-    def __init__(self, api_client: APIClient, dag: DAG, metadata: IntegrationInfo):
-        self._api_client = api_client
+    def __init__(self, dag: DAG, metadata: IntegrationInfo):
         self._dag = dag
         self._metadata = metadata
 
@@ -82,7 +80,6 @@ class GoogleSheetsIntegration(Integration):
         )
 
         return TableArtifact(
-            api_client=self._api_client,
             dag=self._dag,
             artifact_id=output_artifact_id,
         )

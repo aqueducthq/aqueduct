@@ -3,13 +3,14 @@ import sys
 from io import StringIO
 from unittest.mock import MagicMock
 
-from aqueduct.api_client import APIClient
 from aqueduct.decorator import check, metric
 from aqueduct.enums import ExecutionStatus
 from aqueduct.metric_artifact import MetricArtifact
 from aqueduct.responses import ArtifactResult, MetricArtifactResult, OperatorResult, PreviewResponse
 from aqueduct.tests.utils import default_table_artifact
 from aqueduct.utils import delete_zip_folder_and_file, generate_uuid
+
+from aqueduct import api_client
 
 metric_op_name = "metric_fn"
 description = f"{metric_op_name} description"
@@ -28,14 +29,13 @@ def test_metric():
     op_id = generate_uuid()
     artifact_id = generate_uuid()
     artifact_name = "artifact"
-    api_client = APIClient("", "")
+    api_client.__GLOBAL_API_CLIENT__.configure("", "")
 
     metric_input = default_table_artifact(
         operator_name=op_name,
         operator_id=op_id,
         artifact_name=artifact_name,
         artifact_id=artifact_id,
-        api_client=api_client,
     )
     dag = metric_input._dag
 
@@ -56,11 +56,11 @@ def test_metric():
         operator_results=operator_results,
         artifact_results=artifact_results,
     )
-    api_client.preview = MagicMock(return_value=preview_output)
+    api_client.__GLOBAL_API_CLIENT__.preview = MagicMock(return_value=preview_output)
 
     metric_val = metric_output.get()
 
-    api_client.preview.assert_called_with(dag=dag)
+    api_client.__GLOBAL_API_CLIENT__.preview.assert_called_with(dag=dag)
     assert len(dag.operators) == len(dag.artifacts)
     assert len(dag.operators) == 2
 

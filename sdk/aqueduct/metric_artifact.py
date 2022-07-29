@@ -4,7 +4,6 @@ import json
 import uuid
 from typing import Any, Callable, Dict, List, Optional
 
-from aqueduct.api_client import APIClient
 from aqueduct.artifact import ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.dag import (
@@ -28,6 +27,7 @@ from aqueduct.utils import (
 )
 
 import aqueduct
+from aqueduct import api_client
 
 
 class MetricArtifact(Artifact):
@@ -47,10 +47,7 @@ class MetricArtifact(Artifact):
         >>> val = metric_artifact.get()
     """
 
-    def __init__(
-        self, api_client: APIClient, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False
-    ):
-        self._api_client = api_client
+    def __init__(self, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False):
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
@@ -81,7 +78,7 @@ class MetricArtifact(Artifact):
             ],
             make_copy=True,
         )
-        preview_resp = self._api_client.preview(dag=dag)
+        preview_resp = api_client.__GLOBAL_API_CLIENT__.preview(dag=dag)
         artifact_result = preview_resp.artifact_results[self._artifact_id]
 
         if artifact_result.metric:
@@ -251,9 +248,7 @@ class MetricArtifact(Artifact):
             ],
         )
 
-        return CheckArtifact(
-            api_client=self._api_client, dag=self._dag, artifact_id=output_artifact_id
-        )
+        return CheckArtifact(dag=self._dag, artifact_id=output_artifact_id)
 
     def remove_check(self, name: str) -> None:
         apply_deltas_to_dag(

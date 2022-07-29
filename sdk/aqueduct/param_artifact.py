@@ -3,7 +3,6 @@ import textwrap
 import uuid
 from typing import Any, Dict, Optional
 
-from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.generic_artifact import Artifact
@@ -11,12 +10,9 @@ from aqueduct.utils import format_header_for_print
 
 
 class ParamArtifact(Artifact):
-    def __init__(
-        self, api_client: APIClient, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False
-    ):
+    def __init__(self, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False):
         """The APIClient is only included because decorated functions operators acting on this parameter
         will need a handle to an API client."""
-        self._api_client = api_client
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.

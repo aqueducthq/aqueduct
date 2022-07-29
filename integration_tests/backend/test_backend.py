@@ -51,7 +51,7 @@ class TestBackend:
     def get_response_class(cls, endpoint, additional_headers={}):
         headers = {"api-key": pytest.api_key}
         headers.update(additional_headers)
-        url = cls.client._api_client.construct_full_url(endpoint)
+        url = aqueduct.api_client.__GLOBAL_API_CLIENT__.construct_full_url(endpoint)
         r = requests.get(url, headers=headers)
         return r
 

@@ -1,11 +1,12 @@
 from typing import List, Optional, Tuple
 
-from aqueduct.api_client import APIClient
 from aqueduct.enums import FunctionGranularity, FunctionType, GithubRepoConfigContentType
 from aqueduct.error import InvalidGithubQueryError
 from aqueduct.table_artifact import TableArtifact
 from aqueduct.templates import DEFAULT_OP_METHOD_NAME
 from aqueduct.utils import MODEL_FILE_NAME
+
+from aqueduct import api_client
 
 from .decorator import OutputArtifactFunction, wrap_spec
 from .operators import (
@@ -31,8 +32,7 @@ def _get_owner_and_repo_from_url(repo_url: str) -> Tuple[str, str]:
 
 
 class Github:
-    def __init__(self, client: APIClient, repo_url: str, branch: str = ""):
-        self._client = client
+    def __init__(self, repo_url: str, branch: str = ""):
         self.repo_url = repo_url
         self.branch = branch
 
@@ -72,7 +72,7 @@ class Github:
         self.branch = branch
 
     def list_branches(self) -> List[str]:
-        return self._client.list_github_branches(self.repo_url)
+        return api_client.__GLOBAL_API_CLIENT__.list_github_branches(self.repo_url)
 
     def op(
         self,

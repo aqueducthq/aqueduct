@@ -4,11 +4,12 @@ import json
 import uuid
 from typing import Any, Dict, Optional
 
-from aqueduct.api_client import APIClient
 from aqueduct.dag import DAG, SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
 from aqueduct.error import AqueductError
 from aqueduct.generic_artifact import Artifact
 from aqueduct.utils import format_header_for_print, get_description_for_check
+
+from aqueduct import api_client
 
 
 class CheckArtifact(Artifact):
@@ -30,10 +31,7 @@ class CheckArtifact(Artifact):
         >>> assert check_artifact.get()
     """
 
-    def __init__(
-        self, api_client: APIClient, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False
-    ):
-        self._api_client = api_client
+    def __init__(self, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False):
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
@@ -64,7 +62,7 @@ class CheckArtifact(Artifact):
             ],
             make_copy=True,
         )
-        preview_resp = self._api_client.preview(dag=dag)
+        preview_resp = api_client.__GLOBAL_API_CLIENT__.preview(dag=dag)
         artifact_result = preview_resp.artifact_results[self._artifact_id]
 
         if artifact_result.check:

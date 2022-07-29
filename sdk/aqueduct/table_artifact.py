@@ -5,7 +5,6 @@ import uuid
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
-from aqueduct.api_client import APIClient
 from aqueduct.artifact import ArtifactSpec
 from aqueduct.check_artifact import CheckArtifact
 from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
@@ -52,6 +51,7 @@ from great_expectations.validator.validator import Validator
 from ruamel import yaml
 
 import aqueduct
+from aqueduct import api_client
 
 OutputArtifact = Union[MetricArtifact, CheckArtifact]
 
@@ -77,10 +77,7 @@ class TableArtifact(Artifact):
         >>> output_artifact.save(warehouse.config(table_name="output_table"))
     """
 
-    def __init__(
-        self, api_client: APIClient, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False
-    ):
-        self._api_client = api_client
+    def __init__(self, dag: DAG, artifact_id: uuid.UUID, from_flow_run: bool = False):
         self._dag = dag
         self._artifact_id = artifact_id
         # This parameter indicates whether the artifact is fetched from flow-run or not.
@@ -117,7 +114,7 @@ class TableArtifact(Artifact):
             make_copy=True,
         )
 
-        preview_resp = self._api_client.preview(dag=dag)
+        preview_resp = api_client.__GLOBAL_API_CLIENT__.preview(dag=dag)
         artifact_result = preview_resp.artifact_results[self._artifact_id]
 
         if artifact_result.table:
@@ -162,7 +159,7 @@ class TableArtifact(Artifact):
         """
         integration_info = config.integration_info
         integration_load_params = config.parameters
-        integrations_map = self._api_client.list_integrations()
+        integrations_map = api_client.__GLOBAL_API_CLIENT__.list_integrations()
 
         if integration_info.name not in integrations_map:
             raise InvalidIntegrationException("Not connected to db %s!" % integration_info.name)
@@ -561,14 +558,10 @@ class TableArtifact(Artifact):
         output_artifact_id = generate_uuid()
         if op_spec.metric or op_spec.system_metric:
             artifact_spec = ArtifactSpec(float={})
-            output_artifact = MetricArtifact(
-                api_client=self._api_client, dag=self._dag, artifact_id=output_artifact_id
-            )
+            output_artifact = MetricArtifact(dag=self._dag, artifact_id=output_artifact_id)
         elif op_spec.check:
             artifact_spec = ArtifactSpec(bool={})
-            output_artifact = CheckArtifact(
-                api_client=self._api_client, dag=self._dag, artifact_id=output_artifact_id
-            )
+            output_artifact = CheckArtifact(dag=self._dag, artifact_id=output_artifact_id)
         else:
             raise AqueductError("Operator spec not supported.")
 

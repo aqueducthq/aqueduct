@@ -25,9 +25,6 @@ func newFunctionOperator(
 	inputs := base.inputs
 	outputs := base.outputs
 
-	if len(inputs) == 0 {
-		return nil, errWrongNumInputs
-	}
 	if len(outputs) == 0 {
 		return nil, errWrongNumOutputs
 	}
