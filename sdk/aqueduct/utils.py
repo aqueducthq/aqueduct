@@ -310,7 +310,7 @@ def _infer_requirements() -> List[str]:
     """TODO(kenxu): documentation"""
     try:
         process = subprocess.Popen(
-            "python3 -m pip freeze",
+            "pip freeze",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
