@@ -174,6 +174,7 @@ def test_check_with_series_output(client):
     run_flow_test(client, artifacts=[sql_artifact, passed, failed])
 
 
+@pytest.mark.publish
 def test_check_failure_with_varying_severity(client):
     db = client.integration(name=get_integration_name())
     sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
